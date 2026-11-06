@@ -44,7 +44,9 @@ export default function Home() {
  const [temp,setTemp]=useState("");
  const [mucus,setMucus]=useState("");
  const [symptoms,setSymptoms]=useState([]);
- const [breastfeeding,setBreastfeeding]=useState(false);\n const [postpartumWeeks,setPostpartumWeeks]=useState("");\n const [irregularBleeding,setIrregularBleeding]=useState(false);
+ const [breastfeeding,setBreastfeeding]=useState(false);
+ const [postpartumWeeks,setPostpartumWeeks]=useState("");
+ const [irregularBleeding,setIrregularBleeding]=useState(false);
  const [saved,setSaved]=useState(false);
  const [tab,setTab]=useState("home");
  const today=new Date(); today.setHours(12,0,0,0);
@@ -59,8 +61,10 @@ export default function Home() {
    basal_temperature_c: temp === "" ? null : Number(temp),
    symptoms: symptoms.map(s => s === "poorSleep" ? "poor-sleep" : s)
   }],
-  breastfeeding
- }), [todayISO,lastPeriod,cycleLength,mucus,temp,symptoms,breastfeeding]);
+  breastfeeding,
+  postpartumWeeks: postpartumWeeks === "" ? undefined : Number(postpartumWeeks),
+  irregularBleeding
+ }), [todayISO,lastPeriod,cycleLength,mucus,temp,symptoms,breastfeeding,postpartumWeeks,irregularBleeding]);
  const statusLabel = fertilityResult.status === "potentially-fertile" ? t.potentiallyFertile : t.uncertain;
  const statusExplanation = lang === "am"
   ? (fertilityResult.status === "potentially-fertile" ? "የመራቢያ ምልክት ታይቷል። ይህን ቀን ሊሆን እንደሚችል የመራቢያ ቀን ይቁጠሩ።" : "በቂ እና የተረጋገጠ መረጃ የለም። ይህን ቀን እንደ ያልተረጋገጠ ይቁጠሩ።")
