@@ -20,6 +20,11 @@ permissions:
 jobs:
   build-android:
     runs-on: ubuntu-latest
+    env:
+      LUMI_KEYSTORE_BASE64: ${{ secrets.LUMI_KEYSTORE_BASE64 }}
+      LUMI_KEYSTORE_PASSWORD: ${{ secrets.LUMI_KEYSTORE_PASSWORD }}
+      LUMI_KEY_ALIAS: ${{ secrets.LUMI_KEY_ALIAS }}
+      LUMI_KEY_PASSWORD: ${{ secrets.LUMI_KEY_PASSWORD }}
     steps:
       - name: Check out Lumi
         uses: actions/checkout@v4
@@ -82,7 +87,7 @@ jobs:
           retention-days: 30
 
       - name: Configure permanent Lumi release signing
-        if: ${{ secrets.LUMI_KEYSTORE_BASE64 != '' }}
+        if: ${{ env.LUMI_KEYSTORE_BASE64 != '' }}
         env:
           LUMI_KEYSTORE_BASE64: ${{ secrets.LUMI_KEYSTORE_BASE64 }}
           LUMI_KEYSTORE_PASSWORD: ${{ secrets.LUMI_KEYSTORE_PASSWORD }}
