@@ -57,6 +57,42 @@ const copy = {
 
 export default function Home() {
  const [lang,setLang]=useState("en");
+ const [authReady,setAuthReady]=useState(false);
+ const [session,setSession]=useState(null);
+ const [authMode,setAuthMode]=useState("login");
+ const [authName,setAuthName]=useState("");
+ const [authPassword,setAuthPassword]=useState("");
+ const [authBusy,setAuthBusy]=useState(false);
+ const [authError,setAuthError]=useState("");
+ useEffect(()=>{
+  try { const saved=window.localStorage.getItem("lumi-language"); if(saved==="en"||saved==="am") setLang(saved); } catch {}
+  const supabase=getSupabaseBrowserClient();
+  supabase.auth.getSession().then(({data})=>{setSession(data.session);setAuthReady(true);});
+  const {data:{subscription}}=supabase.auth.onAuthStateChange((_event,nextSession)=>{setSession(nextSession);setAuthReady(true);});
+  return ()=>subscription.unsubscribe();
+ },[]);
+ useEffect(()=>{try{window.localStorage.setItem("lumi-language",lang);}catch{}},[lang]);
+ const authEmail=authName.trim().toLowerCase().replace(/[^a-z0-9._-]/g,"")+"@lumi.app";
+ const submitAuth=async()=>{
+  setAuthError("");
+  const cleanName=authName.trim();
+  if(cleanName.length<2){setAuthError(lang==="am"?"እባክዎ ስምዎን ያስገቡ።":"Please enter your name (at least 2 characters).");return;}
+  if(authPassword.length<8){setAuthError(lang==="am"?"የይለፍ ቃሉ ቢያንስ 8 ቁምፊዎች ይኑሩት።":"Password must be at least 8 characters.");return;}
+  if(!authEmail.startsWith(cleanName.toLowerCase().replace(/[^a-z0-9._-]/g,""))){setAuthError("Please use a name with English letters or numbers for account sign-in.");return;}
+  setAuthBusy(true);
+  try{
+   const supabase=getSupabaseBrowserClient();
+   if(authMode==="register"){
+    const {data,error}=await supabase.auth.signUp({email:authEmail,password:authPassword,options:{data:{display_name:cleanName,full_name:cleanName}}});
+    if(error) throw error;
+    if(!data.session) setAuthError(lang==="am"?"መለያው ተፈጥሯል። ለማጠናቀቅ የኢሜይል ማረጋገጫ ያስፈልጋል፤ ይህ የመለያ ቅንብር በአስተዳዳሪ መዘጋጀት አለበት።":"Account created. Email confirmation is currently required by the Supabase project settings; disable confirmation for Lumi's name-and-password flow before public launch.");
+   }else{
+    const {error}=await supabase.auth.signInWithPassword({email:authEmail,password:authPassword});
+    if(error) throw error;
+   }
+  }catch(error){setAuthError(error?.message||"Could not sign in. Check your details and try again.");}
+  finally{setAuthBusy(false);}
+ };
  const t=copy[lang];
  const [lastPeriod,setLastPeriod]=useState(()=>{const d=new Date();d.setDate(d.getDate()-6);return d.toISOString().slice(0,10)});
  const [cycleLength,setCycleLength]=useState(30);
@@ -149,6 +185,19 @@ export default function Home() {
  const fmt=d=>d.toLocaleDateString(lang==="am"?"am-ET":"en-US",{month:"short",day:"numeric"});
  const toggle=s=>setSymptoms(v=>v.includes(s)?v.filter(x=>x!==s):[...v,s]);
  const symptomOptions=[["cramps","♧"],["tender","♡"],["headache","☼"],["illness","＋"],["poorSleep","☾"]];
+ if(!authReady) return <main className="auth-loading"><div className="auth-brand">✿ <span>lumi <small>ሉሚ</small></span></div><div className="auth-loader"></div></main>;
+ if(!session) return <main className="login-shell">
+  <div className="login-top"><div className="auth-brand"><span className="auth-mark">✿</span><span>lumi <small>ሉሚ</small></span></div><button className="lang" onClick={()=>setLang(lang==="en"?"am":"en")}>{lang==="en"?"አማ":"EN"} ⇄</button></div>
+  <section className="login-art"><div className="login-glow"></div><div className="login-orb"><span>✿</span><i>✧</i></div><div className="login-art-caption">✧ &nbsp; LUMI</div></section>
+  <section className="login-card">
+   <div className="login-welcome">{lang==="am"?"እንኳን ወደ ሉሚ በደህና መጡ":"Welcome to Lumi"}</div>
+   <div className="login-tabs"><button className={authMode==="login"?"chosen":""} onClick={()=>{setAuthMode("login");setAuthError("");}}>{lang==="am"?"ግባ":"Log in"}</button><button className={authMode==="register"?"chosen":""} onClick={()=>{setAuthMode("register");setAuthError("");}}>{lang==="am"?"መለያ ፍጠር":"Create account"}</button></div>
+   <label className="field-label">{lang==="am"?"ስም":"Your name"}</label><input className="input" autoComplete="username" value={authName} onChange={e=>setAuthName(e.target.value)} placeholder={lang==="am"?"ስምዎን ያስገቡ":"Enter your name"}/>
+   <label className="field-label">{lang==="am"?"የይለፍ ቃል":"Password"}</label><input className="input" type="password" autoComplete={authMode==="login"?"current-password":"new-password"} value={authPassword} onChange={e=>setAuthPassword(e.target.value)} placeholder={lang==="am"?"የይለፍ ቃል":"At least 8 characters"}/>
+   {authError&&<p className="auth-error">{authError}</p>}
+   <button className="primary-button login-submit" disabled={authBusy} onClick={submitAuth}>{authBusy?"…":authMode==="login"?(lang==="am"?"ግባ":"Log in"):(lang==="am"?"መለያ ፍጠር":"Create account")} <span>✧</span></button>
+  </section><p className="login-foot">Made with care · ሉሚ</p>
+ </main>;
  return <main className="shell">
   <header className="topbar"><div className="brand"><span className="brandmark">✿</span><span>lumi <small>ሉሚ</small></span></div><button className="lang" onClick={()=>setLang(lang==="en"?"am":"en")}>{lang==="en"?"አማ":"EN"} ⇄</button></header>
   <section className="hero"><div className="hero-copy"><div className="eyebrow">✧ GLOW WITHIN</div><h1>{t.greeting}</h1><p>{t.subtitle}</p></div><div className="orb"><span>✿</span><i>✧</i></div></section>
