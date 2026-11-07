@@ -129,7 +129,7 @@ jobs:
           rm -f app/lumi-release-key.p12
 
       - name: Upload signed Lumi release APK
-        if: ${{ secrets.LUMI_KEYSTORE_BASE64 != '' }}
+        if: ${{ env.LUMI_KEYSTORE_BASE64 != '' }}
         uses: actions/upload-artifact@v4
         with:
           name: lumi-user-release-apk
