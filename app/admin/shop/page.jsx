@@ -47,6 +47,16 @@ export default function LumiShopAdmin() {
   }, [supabase]);
 
   useEffect(() => {
+    try {
+      setSupabase(getSupabaseBrowserClient());
+    } catch (e) {
+      setError(e.message || "Lumi Supabase connection is unavailable.");
+      setReady(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!supabase) return;
     let alive = true;
     (async () => {
       try {
