@@ -60,6 +60,9 @@ jobs:
           p.write_text(s)
           PY
 
+      - name: Run Lumi fertility-engine tests
+        run: npm test
+
       - name: Build debug APK
         working-directory: android
         run: |
