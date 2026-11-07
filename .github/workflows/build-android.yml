@@ -8,6 +8,10 @@ on:
       - 'capacitor.config.json'
       - '.github/workflows/build-android.yml'
       - 'www/**'
+      - 'app/**'
+      - 'lib/**'
+      - 'package.json'
+      - 'package-lock.json'
   workflow_dispatch:
 
 permissions:
