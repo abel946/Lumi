@@ -5,7 +5,6 @@ export const metadata = {
   title: "Lumi · ሉሚ",
   description: "A natural fertility-awareness companion.",
   applicationName: "Lumi",
-  manifest: "/manifest.webmanifest",
   appleWebApp: { capable: true, statusBarStyle: "default", title: "Lumi" },
   icons: {
     icon: [{ url: "/icons/lumi.svg", type: "image/svg+xml", sizes: "any" }],
