@@ -5,7 +5,9 @@ export const metadata = {
   manifest: "/admin/manifest.webmanifest",
   appleWebApp: { capable: true, statusBarStyle: "default", title: "Lumi admin" },
   icons: {
-    icon: [{ url: "/icons/lumi-admin.svg", type: "image/svg+xml", sizes: "any" }],
+    icon: [
+      { url: "/icons/lumi-admin.svg", type: "image/svg+xml", sizes: "any" }
+    ],
     apple: [{ url: "/icons/lumi-admin.svg", type: "image/svg+xml" }]
   }
 };
