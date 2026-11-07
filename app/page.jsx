@@ -109,6 +109,7 @@ export default function Home() {
  const [shopCategories,setShopCategories]=useState([]);
  const [shopSubmissions,setShopSubmissions]=useState([]);
   const [shopProducts,setShopProducts]=useState([]);
+  const [shopAds,setShopAds]=useState([]);
   const [shopMode,setShopMode]=useState("buy");
   const [shopSearch,setShopSearch]=useState("");
   const [shopCategoryFilter,setShopCategoryFilter]=useState("all");
@@ -152,6 +153,10 @@ export default function Home() {
     const products = await getPublishedShopProducts();
     if (!active) return;
     setShopProducts(products);
+    const { data: ads, error: adsError } = await supabase.from("shop_advertisements").select("*").eq("is_active", true).order("created_at", { ascending: false });
+    if (adsError) throw adsError;
+    if (!active) return;
+    setShopAds(ads || []);
     const zones = await getShopDeliveryZones();
     if (!active) return;
     setDeliveryZones(zones);
@@ -252,6 +257,13 @@ export default function Home() {
     {shopError && <p className="shop-error">{shopError}</p>}
     {!shopLoading && shopMode==="buy" && shopView==="products" && <>
      <p className="muted">{t.buyIntro}</p>
+     {shopAds.length>0 && <section className="shop-ad-card" aria-label="Sponsored advertisement">
+      <div className="shop-ad-heading"><span>{lang==="am"?"ማስታወቂያ":"SPONSORED"}</span><small>{shopAds[0].duration_seconds || 10}s</small></div>
+      {shopAds[0].media_type==="video"
+       ? <video className="shop-ad-media" src={shopAds[0].media_url} autoPlay muted playsInline controls preload="metadata" onTimeUpdate={event=>{if(event.currentTarget.currentTime>=Math.min(Number(shopAds[0].duration_seconds)||10,10)) event.currentTarget.pause();}} />
+       : <img className="shop-ad-media" src={shopAds[0].media_url} alt={shopAds[0].title} />}
+      <div className="shop-ad-caption"><b>{shopAds[0].title}</b>{shopAds[0].target_url && <a href={shopAds[0].target_url} target="_blank" rel="noopener noreferrer">{lang==="am"?"ተጨማሪ ይመልከቱ":"Learn more"} ↗</a>}</div>
+     </section>}
      <input className="input shop-search" value={shopSearch} onChange={e=>setShopSearch(e.target.value)} placeholder={t.searchProducts}/>
      <div className="shop-category-chips"><button className={shopCategoryFilter==="all"?"selected":""} onClick={()=>setShopCategoryFilter("all")}>{t.allCategories}</button>{shopCategories.map(c=><button key={c.id} className={shopCategoryFilter===c.id?"selected":""} onClick={()=>setShopCategoryFilter(c.id)}>{c.name}</button>)}</div>
      {shopProducts.filter(item=>(shopCategoryFilter==="all"||item.category_id===shopCategoryFilter)&&((item.name||"").toLowerCase().includes(shopSearch.toLowerCase())||(item.description||"").toLowerCase().includes(shopSearch.toLowerCase()))).length===0 && <div className="shop-empty"><span>🛍️</span><p>{t.noProducts}</p></div>}
