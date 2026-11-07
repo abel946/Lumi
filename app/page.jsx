@@ -260,9 +260,9 @@ export default function Home() {
      {shopAds.length>0 && <section className="shop-ad-card" aria-label="Sponsored advertisement">
       <div className="shop-ad-heading"><span>{lang==="am"?"ማስታወቂያ":"SPONSORED"}</span><small>{shopAds[0].duration_seconds || 10}s</small></div>
       {shopAds[0].media_type==="video"
-       ? <video className="shop-ad-media" src={shopAds[0].media_url} autoPlay muted playsInline controls preload="metadata" onTimeUpdate={event=>{if(event.currentTarget.currentTime>=Math.min(Number(shopAds[0].duration_seconds)||10,10)) event.currentTarget.pause();}} />
-       : <img className="shop-ad-media" src={shopAds[0].media_url} alt={shopAds[0].title} />}
-      <div className="shop-ad-caption"><b>{shopAds[0].title}</b>{shopAds[0].target_url && <a href={shopAds[0].target_url} target="_blank" rel="noopener noreferrer">{lang==="am"?"ተጨማሪ ይመልከቱ":"Learn more"} ↗</a>}</div>
+       ? <video className="shop-ad-media" src={shopAds[0].media_url} autoPlay muted playsInline controls preload="metadata" onLoadedData={()=>getSupabaseBrowserClient().rpc("increment_lumi_ad_view",{p_ad_id:shopAds[0].id})} onTimeUpdate={event=>{if(event.currentTarget.currentTime>=Math.min(Number(shopAds[0].duration_seconds)||10,10)) event.currentTarget.pause();}} />
+       : <img className="shop-ad-media" src={shopAds[0].media_url} alt={shopAds[0].title} onLoad={()=>getSupabaseBrowserClient().rpc("increment_lumi_ad_view",{p_ad_id:shopAds[0].id})} />}
+      <div className="shop-ad-caption"><b>{shopAds[0].title}</b>{shopAds[0].target_url && <a href={shopAds[0].target_url} target="_blank" rel="noopener noreferrer" onClick={()=>getSupabaseBrowserClient().rpc("increment_lumi_ad_click",{p_ad_id:shopAds[0].id})}>{lang==="am"?"ተጨማሪ ይመልከቱ":"Learn more"} ↗</a>}</div>
      </section>}
      <input className="input shop-search" value={shopSearch} onChange={e=>setShopSearch(e.target.value)} placeholder={t.searchProducts}/>
      <div className="shop-category-chips"><button className={shopCategoryFilter==="all"?"selected":""} onClick={()=>setShopCategoryFilter("all")}>{t.allCategories}</button>{shopCategories.map(c=><button key={c.id} className={shopCategoryFilter===c.id?"selected":""} onClick={()=>setShopCategoryFilter(c.id)}>{c.name}</button>)}</div>
