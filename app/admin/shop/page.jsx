@@ -10,7 +10,7 @@ const pretty = value => String(value || "").replaceAll("_", " ");
 
 export default function LumiShopAdmin() {
   const router = useRouter();
-  const [supabase] = useState(() => getSupabaseBrowserClient());
+  const [supabase, setSupabase] = useState(null);
   const [ready, setReady] = useState(false);
   const [tab, setTab] = useState("orders");
   const [busy, setBusy] = useState(false);
