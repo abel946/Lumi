@@ -3,7 +3,7 @@
   "appName": "Lumi",
   "webDir": "www",
   "server": {
-    "url": "https://lumi-hmq1hg8cv-abemelekbekele375-5949.vercel.app",
+    "url": "https://lumi-black.vercel.app",
     "cleartext": false,
     "androidScheme": "https"
   },
