@@ -217,7 +217,6 @@ export default function Home() {
   averageCycleLength: cycleLength,
   observations: [
    ...observationHistory.filter(row => row.observed_on !== todayISO),
-   ...observationHistory.filter(row => row.observed_on === todayISO),
    {
     observed_on: todayISO,
     cervical_mucus: mucus === "egg" ? "egg-white" : mucus,
