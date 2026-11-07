@@ -218,6 +218,12 @@ export default function Home() {
  if(!session) return <main className="login-shell">
   <div className="login-top"><div className="auth-brand"><span className="auth-mark">✿</span><span>lumi <small>ሉሚ</small></span></div><button className="lang" onClick={()=>setLang(lang==="en"?"am":"en")}>{lang==="en"?"አማ":"EN"} ⇄</button></div>
   <section className="login-art"><div className="login-glow"></div><div className="login-orb"><span>✿︎</span><i>✧</i></div><div className="login-art-caption">✧ &nbsp; LUMI</div></section>
+  <section className="login-promo" aria-label="How Lumi works">
+   <div className="login-promo-kicker"><span className="login-promo-dot"></span>{lang==="am"?"የጠዋት ልምድ":"A SIMPLE MORNING HABIT"}</div>
+   <h2 key={"promo-title-"+lang} className="login-promo-title">{lang==="am"?"በየጠዋቱ አንድ ደቂቃ ለራስዎ።":"Just one minute each morning for you."}</h2>
+   <p key={"promo-copy-"+lang} className="login-promo-copy">{lang==="am"?"ከአልጋ ሳይነሱ የጠዋት የሰውነት ሙቀትዎንና ጥቂት ምልክቶችን ይመዝግቡ። ከዚያ የዕለት ተዕለት ሥራዎን ይቀጥሉ። ሉሚ የመራቢያ እድልዎ መቼ ከፍ ወይም ዝቅ ሊል እንደሚችል፣ ወይም መረጃው ገና በቂ እንዳልሆነ እንዲረዱ ይረዳዎታል።":"Spend about a minute recording your waking temperature and a few signs before you get out of bed. Then get on with your day. Lumi helps you understand when fertility may be higher, lower, or still uncertain."}</p>
+   <div className="login-promo-indicator" aria-hidden="true"><span></span><span></span><span></span></div>
+  </section>
   <section className="login-card">
    <div className="login-welcome">{lang==="am"?"እንኳን ወደ ሉሚ በደህና መጡ":"Welcome to Lumi"}</div>
    <div className="login-tabs"><button className={authMode==="login"?"chosen":""} onClick={()=>{setAuthMode("login");setAuthError("");}}>{lang==="am"?"ግባ":"Log in"}</button><button className={authMode==="register"?"chosen":""} onClick={()=>{setAuthMode("register");setAuthError("");}}>{lang==="am"?"መለያ ፍጠር":"Create account"}</button></div>
