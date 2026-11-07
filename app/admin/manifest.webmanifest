@@ -1,0 +1,13 @@
+{
+  "id": "/admin",
+  "name": "Lumi CEO Administration",
+  "short_name": "Lumi CEO",
+  "description": "Lumi shop and platform administration.",
+  "start_url": "/admin",
+  "scope": "/admin",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fff5fa",
+  "theme_color": "#a92f69",
+  "icons": [{ "src": "/icons/lumi-admin.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}
