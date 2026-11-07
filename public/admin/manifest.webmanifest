@@ -1,0 +1,27 @@
+{
+  "id": "/admin/",
+  "name": "Lumi admin",
+  "short_name": "Lumi admin",
+  "description": "Lumi shop and platform administration.",
+  "start_url": "/admin/",
+  "scope": "/admin/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fff5fa",
+  "theme_color": "#a92f69",
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "/icons/lumi-admin.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/lumi-admin.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}
