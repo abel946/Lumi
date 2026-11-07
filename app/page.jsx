@@ -137,6 +137,8 @@ export default function Home() {
  const [productPhotos,setProductPhotos]=useState([]);
  const [productErrors,setProductErrors]=useState({});
 
+ const today=new Date(); today.setHours(12,0,0,0);
+ const todayISO = [today.getFullYear(), String(today.getMonth()+1).padStart(2,"0"), String(today.getDate()).padStart(2,"0")].join("-");
  useEffect(() => {
   let active = true;
   if (!session) {
@@ -156,11 +158,9 @@ export default function Home() {
    }
    setObservationHistory(observations || []);
    const todayRecord = (observations || []).find(row => row.observed_on === todayISO);
-   if (todayRecord) {
-    setTemp(todayRecord.basal_temperature_c == null ? "" : String(todayRecord.basal_temperature_c));
-    setMucus(todayRecord.cervical_mucus === "egg-white" ? "egg" : (todayRecord.cervical_mucus || ""));
-    setSymptoms((todayRecord.symptoms || []).map(s => s === "poor-sleep" ? "poorSleep" : s === "breast-tenderness" ? "tender" : s));
-   }
+   setTemp(todayRecord?.basal_temperature_c == null ? "" : String(todayRecord.basal_temperature_c));
+   setMucus(todayRecord?.cervical_mucus === "egg-white" ? "egg" : (todayRecord?.cervical_mucus || ""));
+   setSymptoms((todayRecord?.symptoms || []).map(s => s === "poor-sleep" ? "poorSleep" : s === "breast-tenderness" ? "tender" : s));
    setCycleDataLoaded(true);
   }).catch(error => {
    if (active) { setCycleDataLoaded(true); console.error("Could not load Lumi cycle history", error); }
@@ -209,8 +209,6 @@ export default function Home() {
   loadShop();
   return () => { active = false; };
  }, [tab, lang]);
- const today=new Date(); today.setHours(12,0,0,0);
- const todayISO = [today.getFullYear(), String(today.getMonth()+1).padStart(2,"0"), String(today.getDate()).padStart(2,"0")].join("-");
  const fertilityResult = useMemo(() => analyzeFertility({
   today: todayISO,
   lastPeriodStart: lastPeriod,
