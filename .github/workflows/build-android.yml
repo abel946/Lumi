@@ -116,7 +116,7 @@ jobs:
           printf "\napply from: 'release-signing.gradle'\n" >> android/app/build.gradle
 
       - name: Build signed Lumi release APK
-        if: ${{ secrets.LUMI_KEYSTORE_BASE64 != '' }}
+        if: ${{ env.LUMI_KEYSTORE_BASE64 != '' }}
         working-directory: android
         env:
           LUMI_KEYSTORE_PATH: app/lumi-release-key.p12
