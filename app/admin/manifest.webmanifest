@@ -1,7 +1,7 @@
 {
   "id": "/admin",
-  "name": "Lumi CEO Administration",
-  "short_name": "Lumi CEO",
+  "name": "Lumi admin",
+  "short_name": "Lumi admin",
   "description": "Lumi shop and platform administration.",
   "start_url": "/admin",
   "scope": "/admin",
