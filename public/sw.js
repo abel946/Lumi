@@ -1,5 +1,5 @@
-const CACHE_NAME = "lumi-shell-v1";
-const APP_SHELL = ["/", "/admin", "/manifest.webmanifest", "/admin/manifest.webmanifest"];
+const CACHE_NAME = "lumi-shell-v2";
+const APP_SHELL = ["/", "/admin/", "/admin/manifest.webmanifest", "/icons/lumi-admin.svg"];
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_SHELL)).then(() => self.skipWaiting()));
 });
@@ -15,6 +15,6 @@ self.addEventListener("fetch", event => {
     event.respondWith(fetch(request).then(response => {
       if (response.ok) caches.open(CACHE_NAME).then(cache => cache.put(request, response.clone()));
       return response;
-    }).catch(async () => (await caches.match(request)) || (await caches.match(url.pathname.startsWith("/admin") ? "/admin" : "/")));
+    }).catch(async () => (await caches.match(request)) || (await caches.match(url.pathname.startsWith("/admin") ? "/admin/" : "/")));
   }
 });
