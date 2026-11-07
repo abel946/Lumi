@@ -107,7 +107,12 @@ export default function Home() {
  const [tab,setTab]=useState("home");
  const [shopUser,setShopUser]=useState(null);
  const [shopCategories,setShopCategories]=useState([]);
- const [shopSubmissions,setShopSubmissions]=useState([]);\n  const [shopProducts,setShopProducts]=useState([]);\n  const [shopMode,setShopMode]=useState("buy");\n  const [shopSearch,setShopSearch]=useState("");\n  const [shopCategoryFilter,setShopCategoryFilter]=useState("all");\n  const [expandedProduct,setExpandedProduct]=useState("");
+ const [shopSubmissions,setShopSubmissions]=useState([]);
+  const [shopProducts,setShopProducts]=useState([]);
+  const [shopMode,setShopMode]=useState("buy");
+  const [shopSearch,setShopSearch]=useState("");
+  const [shopCategoryFilter,setShopCategoryFilter]=useState("all");
+  const [expandedProduct,setExpandedProduct]=useState("");
  const [shopLoading,setShopLoading]=useState(false);
  const [shopBusy,setShopBusy]=useState(false);
  const [shopMessage,setShopMessage]=useState("");
@@ -135,7 +140,10 @@ export default function Home() {
     setShopUser(user ?? null);
     const categories = await getActiveShopCategories();
     if (!active) return;
-    setShopCategories(categories);\n    const products = await getPublishedShopProducts();\n    if (!active) return;\n    setShopProducts(products);
+    setShopCategories(categories);
+    const products = await getPublishedShopProducts();
+    if (!active) return;
+    setShopProducts(products);
     if (user) {
      const listings = await getMyProductSubmissions();
      if (!active) return;
