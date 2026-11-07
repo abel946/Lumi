@@ -33,7 +33,7 @@ export default function AdminLoginPage() {
         await supabase.auth.signOut();
         throw new Error("This account does not have Lumi administrator access.");
       }
-      router.replace("/admin/shop");
+      router.replace("/admin/dashboard");
       router.refresh();
     } catch (err) {
       setError(err.message || "Unable to sign in. Please try again.");
