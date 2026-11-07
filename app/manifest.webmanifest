@@ -1,0 +1,13 @@
+{
+  "id": "/",
+  "name": "Lumi · ሉሚ",
+  "short_name": "Lumi",
+  "description": "Your personal cycle and fertility-awareness companion.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fff5fa",
+  "theme_color": "#e85b98",
+  "icons": [{ "src": "/icons/lumi.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}
