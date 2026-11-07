@@ -1,4 +1,5 @@
 name: Build Lumi Android APK
+# Manual release build trigger: permanent signing secrets configured
 
 on:
   push:
