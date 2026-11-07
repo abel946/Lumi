@@ -1,10 +1,10 @@
 {
-  "id": "/admin?app=lumi-admin-v2",
+  "id": "/admin/",
   "name": "Lumi admin",
   "short_name": "Lumi admin",
   "description": "Lumi shop and platform administration.",
-  "start_url": "/admin",
-  "scope": "/admin",
+  "start_url": "/admin/",
+  "scope": "/admin/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#fff5fa",
@@ -12,15 +12,15 @@
   "icons": [
     {
       "src": "/icons/lumi-admin.svg",
-      "sizes": "192x192",
+      "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"
     },
     {
       "src": "/icons/lumi-admin.svg",
-      "sizes": "512x512",
+      "sizes": "any",
       "type": "image/svg+xml",
-      "purpose": "any"
+      "purpose": "maskable"
     }
   ]
 }
