@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { analyzeFertility } from "../lib/fertility-engine.js";
 import { getSupabaseBrowserClient } from "../lib/supabase-browser.js";
-import { getActiveShopCategories, getMyProductSubmissions, getPublishedShopProducts, submitProductForReview } from "../lib/shop-submissions.js";
+import { getActiveShopCategories, getMyProductSubmissions, getPublishedShopProducts, getShopDeliveryZones, getMyShopOrders, placeShopOrder, submitProductForReview } from "../lib/shop-submissions.js";
 import { saveCycleAndDailyObservation } from "../lib/cycle-data.js";
 
 const copy = {
@@ -20,7 +20,7 @@ const copy = {
   disclaimer:"Understand your cycle and fertility patterns with insights based on your personal observations.",
   saved:"Today’s observation has been saved to your Lumi account.", saveFailed:"Could not save. Please sign in and try again.", start:"Start with your cycle details", intro:"Add your recent period date and observations to build your personal report.",
   home:"Home", cycleTab:"My cycle", reportTab:"My report", profile:"Profile", shop:"Women’s shop",
-  buyItems:"Shop products", sellItems:"Sell an item", viewItem:"View details", hideDetails:"Hide details", noProducts:"No products are available yet. Check back soon.", searchProducts:"Search products…", allCategories:"All items", inStock:"In stock", buyIntro:"Browse products approved and published by the Lumi admin team.", sellItem:"Sell an item", shopIntro:"Share your products with the Lumi community. Every listing is reviewed before it appears in the shop.",
+  buyItems:"Shop products", sellItems:"Sell an item", viewItem:"View details", hideDetails:"Hide details", noProducts:"No products are available yet. Check back soon.", searchProducts:"Search products…", allCategories:"All items", inStock:"In stock", buyIntro:"Browse products approved and published by the Lumi admin team.", addToCart:"Add to cart", cart:"My cart", orders:"My orders", checkout:"Delivery details", recipient:"Recipient name", phone:"Phone number", address:"Delivery address", deliveryArea:"Delivery area", chooseArea:"Choose delivery area", quantity:"Qty", remove:"Remove", placeOrder:"Place order (payment later)", orderSuccess:"Your order has been placed. Payment will be available later.", orderNumber:"Order number", orderStatus:"Order status", paymentStatus:"Payment status", paymentLater:"Payment not connected yet", emptyCart:"Your cart is empty.", emptyOrders:"You have not placed any orders yet.", subtotal:"Subtotal", deliveryFee:"Delivery fee", total:"Total", pendingOrder:"Awaiting confirmation", sellItem:"Sell an item", shopIntro:"Share your products with the Lumi community. Every listing is reviewed before it appears in the shop.",
   productName:"Product name", category:"Category", selectCategory:"Choose a category", description:"Description",
   price:"Price (ETB)", stock:"Available stock", photos:"Product photos (up to 6)", deliveryNotes:"Delivery information",
   submitProduct:"Submit for review", myListings:"My submissions", pending:"Pending review", approved:"Approved", rejected:"Not approved",
@@ -44,7 +44,7 @@ const copy = {
   disclaimer:"በግል ምልከታዎችዎ ላይ በተመሠረቱ ግንዛቤዎች የወር አበባ ዑደትዎንና የመራቢያ ቅጦችዎን ይረዱ።",
   saved:"የዛሬ ምልከታዎ በሉሚ መለያዎ ውስጥ ተቀምጧል።", saveFailed:"መረጃውን ማስቀመጥ አልተቻለም። እባክዎ ይግቡና እንደገና ይሞክሩ።", start:"በዑደት መረጃዎ ይጀምሩ", intro:"የመጨረሻ ወር አበባዎን ቀንና ምልከታዎችን ያስገቡ።",
   home:"መነሻ", cycleTab:"ዑደቴ", reportTab:"ሪፖርቴ", profile:"መገለጫ", shop:"የሴቶች ሱቅ",
-  buyItems:"ምርቶችን ይግዙ", sellItems:"ዕቃ ይሽጡ", viewItem:"ዝርዝር ይመልከቱ", hideDetails:"ዝርዝሩን ዝጋ", noProducts:"እስካሁን ምንም ምርት የለም። ቆይተው ይመልከቱ።", searchProducts:"ምርቶችን ይፈልጉ…", allCategories:"ሁሉም ምርቶች", inStock:"በክምችት አለ", buyIntro:"በሉሚ አስተዳዳሪ የተገመገሙና የታተሙ ምርቶችን ይመልከቱ።", sellItem:"ዕቃ ይሽጡ", shopIntro:"ምርቶችዎን ለሉሚ ማህበረሰብ ያቅርቡ። በሱቁ ከመታየታቸው በፊት በአስተዳዳሪ ይገመገማሉ።",
+  buyItems:"ምርቶችን ይግዙ", sellItems:"ዕቃ ይሽጡ", viewItem:"ዝርዝር ይመልከቱ", hideDetails:"ዝርዝሩን ዝጋ", noProducts:"እስካሁን ምንም ምርት የለም። ቆይተው ይመልከቱ።", searchProducts:"ምርቶችን ይፈልጉ…", allCategories:"ሁሉም ምርቶች", inStock:"በክምችት አለ", buyIntro:"በሉሚ አስተዳዳሪ የተገመገሙና የታተሙ ምርቶችን ይመልከቱ።", addToCart:"ወደ ጋሪ ጨምር", cart:"የግዢ ጋሪዬ", orders:"ትዕዛዞቼ", checkout:"የማድረሻ መረጃ", recipient:"የተቀባይ ስም", phone:"ስልክ ቁጥር", address:"የማድረሻ አድራሻ", deliveryArea:"የማድረሻ አካባቢ", chooseArea:"የማድረሻ አካባቢ ይምረጡ", quantity:"ብዛት", remove:"አስወግድ", placeOrder:"ትዕዛዝ አስገባ (ክፍያ በኋላ)", orderSuccess:"ትዕዛዝዎ ተቀብሏል። ክፍያ በኋላ ይገናኛል።", orderNumber:"የትዕዛዝ ቁጥር", orderStatus:"የትዕዛዝ ሁኔታ", paymentStatus:"የክፍያ ሁኔታ", paymentLater:"የክፍያ ስርዓት ገና አልተገናኘም", emptyCart:"የግዢ ጋሪዎ ባዶ ነው።", emptyOrders:"እስካሁን ትዕዛዝ አላስገቡም።", subtotal:"ድምር", deliveryFee:"የማድረሻ ክፍያ", total:"ጠቅላላ", pendingOrder:"ማረጋገጫ በመጠባበቅ ላይ", sellItem:"ዕቃ ይሽጡ", shopIntro:"ምርቶችዎን ለሉሚ ማህበረሰብ ያቅርቡ። በሱቁ ከመታየታቸው በፊት በአስተዳዳሪ ይገመገማሉ።",
   productName:"የምርት ስም", category:"ምድብ", selectCategory:"ምድብ ይምረጡ", description:"መግለጫ",
   price:"ዋጋ (ብር)", stock:"ያለ ክምችት", photos:"የምርት ፎቶዎች (እስከ 6)", deliveryNotes:"የማድረሻ መረጃ",
   submitProduct:"ለግምገማ አስገባ", myListings:"ያስገባኋቸው ምርቶች", pending:"ግምገማ በመጠባበቅ ላይ", approved:"ጸድቋል", rejected:"አልጸደቀም",
@@ -69,7 +69,11 @@ export default function Home() {
   const supabase=getSupabaseBrowserClient();
   supabase.auth.getSession().then(({data})=>{setSession(data.session);setAuthReady(true);});
   const {data:{subscription}}=supabase.auth.onAuthStateChange((_event,nextSession)=>{setSession(nextSession);setAuthReady(true);});
-  return ()=>subscription.unsubscribe();
+  const cartSubtotal = shopCart.reduce((sum, entry) => sum + Number(entry.price) * entry.quantity, 0);
+ const selectedDeliveryZone = deliveryZones.find(zone => zone.id === deliveryZoneId);
+ const cartDeliveryFee = selectedDeliveryZone ? Number(selectedDeliveryZone.fee) : 0;
+ const cartTotal = cartSubtotal + cartDeliveryFee;
+ return ()=>subscription.unsubscribe();
  },[]);
  useEffect(()=>{try{window.localStorage.setItem("lumi-language",lang);}catch{}},[lang]);
  const authEmail=authName.trim().toLowerCase().replace(/[^a-z0-9._-]/g,"")+"@lumi.app";
@@ -113,6 +117,14 @@ export default function Home() {
   const [shopSearch,setShopSearch]=useState("");
   const [shopCategoryFilter,setShopCategoryFilter]=useState("all");
   const [expandedProduct,setExpandedProduct]=useState("");
+ const [shopCart,setShopCart]=useState([]);
+ const [shopOrders,setShopOrders]=useState([]);
+ const [deliveryZones,setDeliveryZones]=useState([]);
+ const [deliveryName,setDeliveryName]=useState("");
+ const [deliveryPhone,setDeliveryPhone]=useState("");
+ const [deliveryAddress,setDeliveryAddress]=useState("");
+ const [deliveryZoneId,setDeliveryZoneId]=useState("");
+ const [shopView,setShopView]=useState("products");
  const [shopLoading,setShopLoading]=useState(false);
  const [shopBusy,setShopBusy]=useState(false);
  const [shopMessage,setShopMessage]=useState("");
@@ -144,6 +156,10 @@ export default function Home() {
     const products = await getPublishedShopProducts();
     if (!active) return;
     setShopProducts(products);
+    const zones = await getShopDeliveryZones();
+    if (!active) return;
+    setDeliveryZones(zones);
+    if (user) { const orders = await getMyShopOrders(); if (!active) return; setShopOrders(orders); } else { setShopOrders([]); }
     if (user) {
      const listings = await getMyProductSubmissions();
      if (!active) return;
@@ -231,9 +247,10 @@ export default function Home() {
   {tab==="shop" && <section className="panel shop-panel">
     <span className="eyebrow">✧ LUMI WOMEN’S SHOP</span><h2>{t.shop}</h2>
     <div className="shop-mode-tabs"><button className={shopMode==="buy"?"selected":""} onClick={()=>setShopMode("buy")}>🛍️ {t.buyItems}</button><button className={shopMode==="sell"?"selected":""} onClick={()=>setShopMode("sell")}>＋ {t.sellItems}</button></div>
+    {shopMode==="buy" && <div className="shop-subnav"><button className={shopView==="products"?"selected":""} onClick={()=>setShopView("products")}>{t.buyItems}</button><button className={shopView==="cart"?"selected":""} onClick={()=>setShopView("cart")}>{t.cart} ({shopCart.reduce((s,x)=>s+x.quantity,0)})</button><button className={shopView==="orders"?"selected":""} onClick={()=>setShopView("orders")}>{t.orders}</button></div> }
     {shopLoading && <p className="muted">{t.loading}</p>}
     {shopError && <p className="shop-error">{shopError}</p>}
-    {!shopLoading && shopMode==="buy" && <>
+    {!shopLoading && shopMode==="buy" && shopView==="products" && <>
      <p className="muted">{t.buyIntro}</p>
      <input className="input shop-search" value={shopSearch} onChange={e=>setShopSearch(e.target.value)} placeholder={t.searchProducts}/>
      <div className="shop-category-chips"><button className={shopCategoryFilter==="all"?"selected":""} onClick={()=>setShopCategoryFilter("all")}>{t.allCategories}</button>{shopCategories.map(c=><button key={c.id} className={shopCategoryFilter===c.id?"selected":""} onClick={()=>setShopCategoryFilter(c.id)}>{c.name}</button>)}</div>
@@ -242,9 +259,30 @@ export default function Home() {
       <div className="shop-product-image">{item.image_urls?.[0]?<img src={item.image_urls[0]} alt={item.name}/>:<span>✿</span>}</div>
       <div className="shop-product-info"><small>{item.shop_categories?.name||t.shop}</small><b>{item.name}</b><strong>{Number(item.price).toLocaleString()} {item.currency||"ETB"}</strong><small>{t.inStock}: {item.stock_quantity}</small>
        <button className="outline-button shop-detail-button" onClick={()=>setExpandedProduct(expandedProduct===item.id?"":item.id)}>{expandedProduct===item.id?t.hideDetails:t.viewItem} <span>⌄</span></button>
+       <button className="primary-button shop-add-button" onClick={()=>setShopCart(current=>{const found=current.find(x=>x.id===item.id);return found?current.map(x=>x.id===item.id?{...x,quantity:Math.min(x.quantity+1,Number(item.stock_quantity))}:x):[...current,{...item,quantity:1}];})}>{t.addToCart}</button>
        {expandedProduct===item.id&&<p className="shop-product-description">{item.description||""}</p>}
       </div></article>)}</div>
     </>}
+    {shopMode==="buy" && shopView==="cart" && <div className="shop-cart-view">
+     <h3>{t.cart}</h3>
+     {shopCart.length===0 && <p className="shop-empty">{t.emptyCart}</p>}
+     {shopCart.map(entry=><div className="shop-cart-row" key={entry.id}><div><b>{entry.name}</b><small>{Number(entry.price).toLocaleString()} {entry.currency}</small></div><div className="shop-quantity"><button onClick={()=>setShopCart(current=>current.map(x=>x.id===entry.id?{...x,quantity:Math.max(1,x.quantity-1)}:x))}>−</button><b>{entry.quantity}</b><button onClick={()=>setShopCart(current=>current.map(x=>x.id===entry.id?{...x,quantity:Math.min(Number(x.stock_quantity),x.quantity+1)}:x))}>＋</button><button onClick={()=>setShopCart(current=>current.filter(x=>x.id!==entry.id))}>{t.remove}</button></div></div>)}
+     {shopCart.length>0 && <>
+      <div className="shop-total-line"><span>{t.subtotal}</span><b>{cartSubtotal.toLocaleString()} ETB</b></div>
+      <h3>{t.checkout}</h3>
+      {!shopUser && <div className="info-box">{t.signInRequired}</div>}
+      {shopUser && <>
+       <label className="field-label">{t.recipient}</label><input className="input" value={deliveryName} onChange={e=>setDeliveryName(e.target.value)} />
+       <label className="field-label">{t.phone}</label><input className="input" type="tel" value={deliveryPhone} onChange={e=>setDeliveryPhone(e.target.value)} />
+       <label className="field-label">{t.address}</label><textarea className="input shop-textarea" value={deliveryAddress} onChange={e=>setDeliveryAddress(e.target.value)} />
+       <label className="field-label">{t.deliveryArea}</label><select className="input" value={deliveryZoneId} onChange={e=>setDeliveryZoneId(e.target.value)}><option value="">{t.chooseArea}</option>{deliveryZones.map(z=><option key={z.id} value={z.id}>{z.region} · {z.city} — {Number(z.fee).toLocaleString()} {z.currency}</option>)}</select>
+       <div className="shop-total-line"><span>{t.deliveryFee}</span><b>{cartDeliveryFee.toLocaleString()} ETB</b></div><div className="shop-total-line shop-grand-total"><span>{t.total}</span><b>{cartTotal.toLocaleString()} ETB</b></div>
+       <p className="shop-hint">{t.paymentLater}</p>
+       <button className="primary-button" disabled={shopBusy || !deliveryName.trim() || !deliveryPhone.trim() || !deliveryAddress.trim()} onClick={async()=>{setShopBusy(true);setShopError("");setShopMessage("");try{const order=await placeShopOrder({deliveryName,deliveryPhone,deliveryAddress,deliveryZoneId,items:shopCart});setShopMessage(t.orderSuccess+" "+t.orderNumber+": "+order.order_number);setShopCart([]);const orders=await getMyShopOrders();setShopOrders(orders);setShopView("orders");const products=await getPublishedShopProducts();setShopProducts(products);}catch(error){setShopError(error?.message||t.shopError);}finally{setShopBusy(false);}}}>{shopBusy?"…":t.placeOrder}</button>
+      </>}
+     </>}
+    </div>}
+    {shopMode==="buy" && shopView==="orders" && <div className="shop-orders-view"><h3>{t.orders}</h3>{!shopUser&&<div className="info-box">{t.signInRequired}</div>}{shopUser&&shopOrders.length===0&&<p className="shop-empty">{t.emptyOrders}</p>}{shopOrders.map(order=><article className="shop-order-card" key={order.id}><div className="shop-order-head"><b>{order.order_number}</b><span className="badge yellowbg">{order.order_status}</span></div><small>{new Date(order.created_at).toLocaleDateString()}</small>{order.shop_order_items?.map(item=><div className="shop-order-item" key={item.id}><span>{item.product_name} × {item.quantity}</span><b>{Number(item.line_total).toLocaleString()} ETB</b></div>)}<div className="shop-total-line"><span>{t.total}</span><b>{Number(order.total_amount).toLocaleString()} {order.currency}</b></div><p className="shop-hint">{t.paymentLater} · {order.payment_status}</p></article>)}</div>}
     {shopMode==="sell" && <>
      <p className="muted">{t.shopIntro}</p>
      {!shopUser && <div className="info-box"><b>{t.signInRequired}</b><p>Sign in to your Lumi account first. Your product listings are private until you submit them.</p></div>}
