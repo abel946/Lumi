@@ -188,7 +188,7 @@ export default function Home() {
  if(!authReady) return <main className="auth-loading"><div className="auth-brand">✿ <span>lumi <small>ሉሚ</small></span></div><div className="auth-loader"></div></main>;
  if(!session) return <main className="login-shell">
   <div className="login-top"><div className="auth-brand"><span className="auth-mark">✿</span><span>lumi <small>ሉሚ</small></span></div><button className="lang" onClick={()=>setLang(lang==="en"?"am":"en")}>{lang==="en"?"አማ":"EN"} ⇄</button></div>
-  <section className="login-art"><div className="login-glow"></div><div className="login-orb"><span>✿</span><i>✧</i></div><div className="login-art-caption">✧ &nbsp; LUMI</div></section>
+  <section className="login-art"><div className="login-glow"></div><div className="login-orb"><span>✿︎</span><i>✧</i></div><div className="login-art-caption">✧ &nbsp; LUMI</div></section>
   <section className="login-card">
    <div className="login-welcome">{lang==="am"?"እንኳን ወደ ሉሚ በደህና መጡ":"Welcome to Lumi"}</div>
    <div className="login-tabs"><button className={authMode==="login"?"chosen":""} onClick={()=>{setAuthMode("login");setAuthError("");}}>{lang==="am"?"ግባ":"Log in"}</button><button className={authMode==="register"?"chosen":""} onClick={()=>{setAuthMode("register");setAuthError("");}}>{lang==="am"?"መለያ ፍጠር":"Create account"}</button></div>
@@ -200,7 +200,7 @@ export default function Home() {
  </main>;
  return <main className="shell">
   <header className="topbar"><div className="brand"><span className="brandmark">✿</span><span>lumi <small>ሉሚ</small></span></div><button className="lang" onClick={()=>setLang(lang==="en"?"am":"en")}>{lang==="en"?"አማ":"EN"} ⇄</button></header>
-  <section className="hero"><div className="hero-copy"><div className="eyebrow">✧ GLOW WITHIN</div><h1>{t.greeting}</h1><p>{t.subtitle}</p></div><div className="orb"><span>✿</span><i>✧</i></div></section>
+  <section className="hero"><div className="hero-copy"><div className="eyebrow">✧ GLOW WITHIN</div><h1>{t.greeting}</h1><p>{t.subtitle}</p></div><div className="orb"><span>✿︎</span><i>✧</i></div></section>
   <nav className="tabs">{[["home",t.home],["cycle",t.cycleTab],["report",t.reportTab],["shop",t.shop],["profile",t.profile]].map(([id,label])=><button key={id} className={tab===id?"active":""} onClick={()=>setTab(id)}>{label}</button>)}</nav>
   {tab==="home" && <>
    <section className="status-card"><div className="card-top"><span className="eyebrow">{t.today}</span><span className="date-pill">{fmt(today)}</span></div><div className="status-row"><div><div className="status-title">{statusLabel}</div><p>{statusExplanation}</p></div><div className="status-icon">?</div></div><div className="status-foot"><span>DAY {cycleDay} · {t.cycleTab.toUpperCase()}</span><span className="dot yellow"></span></div></section>
