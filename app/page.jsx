@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { analyzeFertility } from "../lib/fertility-engine.js";
 import { getSupabaseBrowserClient } from "../lib/supabase-browser.js";
 import { getActiveShopCategories, getMyProductSubmissions, getPublishedShopProducts, getShopDeliveryZones, getMyShopOrders, placeShopOrder, submitProductForReview } from "../lib/shop-submissions.js";
-import { saveCycleAndDailyObservation } from "../lib/cycle-data.js";
+import { loadMyCycleData, saveCycleAndDailyObservation } from "../lib/cycle-data.js";
 
 const copy = {
  en: {
@@ -95,6 +95,8 @@ export default function Home() {
  };
  const t=copy[lang];
  const [lastPeriod,setLastPeriod]=useState(()=>{const d=new Date();d.setDate(d.getDate()-6);return d.toISOString().slice(0,10)});
+ const [observationHistory,setObservationHistory]=useState([]);
+ const [cycleDataLoaded,setCycleDataLoaded]=useState(false);
  const [cycleLength,setCycleLength]=useState(30);
  const [temp,setTemp]=useState("");
  const [mucus,setMucus]=useState("");
@@ -135,6 +137,36 @@ export default function Home() {
  const [productPhotos,setProductPhotos]=useState([]);
  const [productErrors,setProductErrors]=useState({});
 
+ useEffect(() => {
+  let active = true;
+  if (!session) {
+   setObservationHistory([]);
+   setCycleDataLoaded(false);
+   return () => { active = false; };
+  }
+  setCycleDataLoaded(false);
+  loadMyCycleData().then(({preferences, observations}) => {
+   if (!active) return;
+   if (preferences) {
+    if (preferences.last_period_start) setLastPeriod(preferences.last_period_start);
+    if (Number.isInteger(preferences.average_cycle_length)) setCycleLength(preferences.average_cycle_length);
+    setBreastfeeding(Boolean(preferences.breastfeeding));
+    setPostpartumWeeks(preferences.postpartum_weeks == null ? "" : String(preferences.postpartum_weeks));
+    setIrregularBleeding(Boolean(preferences.irregular_bleeding));
+   }
+   setObservationHistory(observations || []);
+   const todayRecord = (observations || []).find(row => row.observed_on === todayISO);
+   if (todayRecord) {
+    setTemp(todayRecord.basal_temperature_c == null ? "" : String(todayRecord.basal_temperature_c));
+    setMucus(todayRecord.cervical_mucus === "egg-white" ? "egg" : (todayRecord.cervical_mucus || ""));
+    setSymptoms((todayRecord.symptoms || []).map(s => s === "poor-sleep" ? "poorSleep" : s === "breast-tenderness" ? "tender" : s));
+   }
+   setCycleDataLoaded(true);
+  }).catch(error => {
+   if (active) { setCycleDataLoaded(true); console.error("Could not load Lumi cycle history", error); }
+  });
+  return () => { active = false; };
+ }, [session, todayISO]);
  useEffect(() => {
   if (tab !== "shop") return;
   let active = true;
@@ -183,16 +215,20 @@ export default function Home() {
   today: todayISO,
   lastPeriodStart: lastPeriod,
   averageCycleLength: cycleLength,
-  observations: [{
-   observed_on: todayISO,
-   cervical_mucus: mucus === "egg" ? "egg-white" : mucus,
-   basal_temperature_c: temp === "" ? null : Number(temp),
-   symptoms: symptoms.map(s => s === "poorSleep" ? "poor-sleep" : s)
-  }],
+  observations: [
+   ...observationHistory.filter(row => row.observed_on !== todayISO),
+   ...observationHistory.filter(row => row.observed_on === todayISO),
+   {
+    observed_on: todayISO,
+    cervical_mucus: mucus === "egg" ? "egg-white" : mucus,
+    basal_temperature_c: temp === "" ? null : Number(temp),
+    symptoms: symptoms.map(s => s === "poorSleep" ? "poor-sleep" : s)
+   }
+  ],
   breastfeeding,
   postpartumWeeks: postpartumWeeks === "" ? undefined : Number(postpartumWeeks),
   irregularBleeding
- }), [todayISO,lastPeriod,cycleLength,mucus,temp,symptoms,breastfeeding,postpartumWeeks,irregularBleeding]);
+ }), [todayISO,lastPeriod,cycleLength,mucus,temp,symptoms,breastfeeding,postpartumWeeks,irregularBleeding,observationHistory]);
  const statusLabel = fertilityResult.status === "potentially-fertile" ? t.potentiallyFertile : t.uncertain;
  const statusExplanation = lang === "am"
   ? (fertilityResult.status === "potentially-fertile" ? "የመራቢያ ምልክት ታይቷል። ይህን ቀን ሊሆን እንደሚችል የመራቢያ ቀን ይቁጠሩ።" : "በቂ እና የተረጋገጠ መረጃ የለም። ይህን ቀን እንደ ያልተረጋገጠ ይቁጠሩ።")
@@ -248,6 +284,7 @@ export default function Home() {
     cervicalMucus:mucus,basalTemperatureC:temp,symptoms,
     breastfeeding,postpartumWeeks,irregularBleeding
    });
+   setObservationHistory(current => [...current.filter(row => row.observed_on !== todayISO), { observed_on: todayISO, cervical_mucus: mucus === "egg" ? "egg-white" : (mucus || null), basal_temperature_c: temp === "" ? null : Number(temp), symptoms: symptoms.map(s => s === "poorSleep" ? "poor-sleep" : s === "tender" ? "breast-tenderness" : s) }]);
    setSaved(true);
   } catch(error) { setSaveError(error?.message || t.saveFailed); }
  }}>{t.save} <span>✧</span></button>{saved&&<p className="success">✓ {t.saved}</p>}{saveError&&<p className="shop-error">{saveError}</p>}</section>
