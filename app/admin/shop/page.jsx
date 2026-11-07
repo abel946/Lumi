@@ -65,10 +65,23 @@ export default function LumiShopAdmin() {
     try {
       const note = (reviewNotes[row.id] || "").trim() || null;
       if (approve) {
+        const publishedUrls = [];
+        for (const [index, path] of (row.image_paths || []).entries()) {
+          const { data: fileData, error: downloadError } = await supabase.storage.from("lumi-product-submissions").download(path);
+          if (downloadError) throw downloadError;
+          const extension = path.split(".").pop()?.toLowerCase() || "jpg";
+          const targetPath = `products/${row.id}/${index + 1}-${crypto.randomUUID()}.${extension}`;
+          const { error: uploadError } = await supabase.storage.from("lumi-shop-products").upload(targetPath, fileData, {
+            contentType: fileData.type || "image/jpeg", cacheControl: "3600", upsert: false
+          });
+          if (uploadError) throw uploadError;
+          const { data: publicData } = supabase.storage.from("lumi-shop-products").getPublicUrl(targetPath);
+          publishedUrls.push(publicData.publicUrl);
+        }
         const { error: productError } = await supabase.from("shop_products").insert({
           category_id: row.category_id, name: row.product_name, description: row.description,
           price: row.price, currency: row.currency || "ETB", stock_quantity: row.stock_quantity,
-          image_urls: [], is_active: true
+          image_urls: publishedUrls, is_active: true
         });
         if (productError) throw productError;
       }
@@ -78,7 +91,7 @@ export default function LumiShopAdmin() {
         reviewed_by: user?.id || null, reviewed_at: new Date().toISOString()
       }).eq("id", row.id);
       if (updateError) throw updateError;
-      setMessage(approve ? "Product approved and published. Add its photos in the product manager when available." : "Submission rejected.");
+      setMessage(approve ? "Product approved and published with its photos." : "Submission rejected.");
       await load();
     } catch (e) { setError(e.message || "Could not review this submission."); }
     finally { setBusy(false); }
@@ -87,9 +100,14 @@ export default function LumiShopAdmin() {
   async function updateOrder(id, order_status) {
     setBusy(true); setError(""); setMessage("");
     try {
-      const { error: updateError } = await supabase.from("shop_orders").update({ order_status, updated_at: new Date().toISOString() }).eq("id", id);
-      if (updateError) throw updateError;
-      setMessage("Order status updated."); await load();
+      if (order_status === "cancelled") {
+        const { error: cancelError } = await supabase.rpc("admin_cancel_lumi_shop_order", { p_order_id: id });
+        if (cancelError) throw cancelError;
+      } else {
+        const { error: updateError } = await supabase.from("shop_orders").update({ order_status, updated_at: new Date().toISOString() }).eq("id", id);
+        if (updateError) throw updateError;
+      }
+      setMessage(order_status === "cancelled" ? "Order cancelled and stock returned to inventory." : "Order status updated."); await load();
     } catch (e) { setError(e.message || "Could not update order."); }
     finally { setBusy(false); }
   }
@@ -144,7 +162,7 @@ export default function LumiShopAdmin() {
         <div className="admin-order-top"><div><b>{order.order_number}</b><small>{new Date(order.created_at).toLocaleString()}</small></div><strong>{money(order.total_amount,order.currency)}</strong></div>
         <div className="admin-customer"><b>{order.delivery_name}</b><span>{order.delivery_phone}</span><span>{order.delivery_address}</span></div>
         <div className="admin-items">{(order.shop_order_items||[]).map(item=><div key={item.id}><span>{item.product_name} × {item.quantity}</span><b>{money(item.line_total,order.currency)}</b></div>)}</div>
-        <div className="admin-order-bottom"><div><small>Payment: {pretty(order.payment_status)}</small><small>Platform commission: {money(order.commission_amount,order.currency)}</small></div><label>Order status<select value={order.order_status} disabled={busy} onChange={e=>updateOrder(order.id,e.target.value)}>{ORDER_STATES.map(s=><option key={s} value={s}>{pretty(s)}</option>)}</select></label></div>
+        <div className="admin-order-bottom"><div><small>Payment: {pretty(order.payment_status)}</small><small>Platform commission: {money(order.commission_amount,order.currency)}</small></div><label>Order status<select value={order.order_status} disabled={busy || order.order_status==="cancelled"} onChange={e=>updateOrder(order.id,e.target.value)}>{ORDER_STATES.filter(s=>s!=="cancelled").map(s=><option key={s} value={s}>{pretty(s)}</option>)}{order.order_status==="cancelled" && <option value="cancelled">cancelled</option>}</select></label>{!["cancelled","delivered"].includes(order.order_status) && <button className="admin-reject" disabled={busy} onClick={()=>{if(window.confirm("Cancel this order and restore its stock to inventory?")) updateOrder(order.id,"cancelled");}}>Cancel order</button>}</div>
       </article>)}
     </section>}
 
