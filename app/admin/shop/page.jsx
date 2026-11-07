@@ -8,6 +8,22 @@ const ORDER_STATES = ["pending", "confirmed", "processing", "out_for_delivery", 
 const money = (value, currency = "ETB") => new Intl.NumberFormat("en-ET", { style: "currency", currency, maximumFractionDigits: 2 }).format(Number(value || 0));
 const pretty = value => String(value || "").replaceAll("_", " ");
 
+function withTimeout(promise, label, milliseconds = 15000) {
+  let timer;
+  return Promise.race([
+    Promise.resolve(promise),
+    new Promise((_, reject) => {
+      timer = setTimeout(() => reject(new Error(`${label} is taking too long. Check your connection and press Refresh.`)), milliseconds);
+    })
+  ]).finally(() => clearTimeout(timer));
+}
+
+async function readQuery(label, query) {
+  const result = await withTimeout(query, label);
+  if (result.error) throw new Error(`${label}: ${result.error.message}`);
+  return result.data;
+}
+
 export default function LumiShopAdmin() {
   const router = useRouter();
   const [supabase, setSupabase] = useState(null);
@@ -29,27 +45,42 @@ export default function LumiShopAdmin() {
   const [adDuration, setAdDuration] = useState(10);
 
   const load = useCallback(async () => {
-    setBusy(true); setError("");
+    if (!supabase) return;
+    setBusy(true); setError(""); setMessage("");
     try {
-      const [{ data: pending, error: pErr }, { data: orderRows, error: oErr }, { data: zoneRows, error: zErr }, { data: settingRow, error: sErr }, { data: adRows, error: adError }] = await Promise.all([
-        supabase.from("shop_product_submissions").select("*").order("created_at", { ascending: false }),
-        supabase.from("shop_orders").select("*,shop_order_items(id,product_name,quantity,unit_price,line_total)").order("created_at", { ascending: false }),
-        supabase.from("delivery_zones").select("*").order("region").order("city"),
-        supabase.from("shop_settings").select("commission_rate,default_delivery_fee,currency").eq("id", true).maybeSingle(),
-        supabase.from("shop_advertisements").select("*").order("created_at", { ascending: false })
+      const [pending, orderRows, zoneRows, settingRow, adRows] = await Promise.all([
+        readQuery("Seller submissions", supabase.from("shop_product_submissions").select("*").order("created_at", { ascending: false })),
+        readQuery("Customer orders", supabase.from("shop_orders").select("*,shop_order_items(id,product_name,quantity,unit_price,line_total)").order("created_at", { ascending: false })),
+        readQuery("Delivery areas", supabase.from("delivery_zones").select("*").order("region").order("city")),
+        readQuery("Shop settings", supabase.from("shop_settings").select("commission_rate,default_delivery_fee,currency").eq("id", true).maybeSingle()),
+        readQuery("Advertisements", supabase.from("shop_advertisements").select("*").order("created_at", { ascending: false }))
       ]);
-      if (pErr) throw pErr; if (oErr) throw oErr; if (zErr) throw zErr; if (sErr) throw sErr; if (adError) throw adError;
       const decorated = await Promise.all((pending || []).map(async row => {
         const urls = await Promise.all((row.image_paths || []).map(async path => {
-          const { data } = await supabase.storage.from("lumi-product-submissions").createSignedUrl(path, 3600);
-          return data?.signedUrl || "";
+          try {
+            const { data, error: signedUrlError } = await withTimeout(
+              supabase.storage.from("lumi-product-submissions").createSignedUrl(path, 3600),
+              "Seller product photo",
+              10000
+            );
+            if (signedUrlError) throw signedUrlError;
+            return data?.signedUrl || "";
+          } catch (photoError) {
+            console.warn("Lumi seller photo preview unavailable:", photoError);
+            return "";
+          }
         }));
         return { ...row, previewUrls: urls.filter(Boolean) };
       }));
       setSubmissions(decorated); setOrders(orderRows || []); setZones(zoneRows || []); setAds(adRows || []);
       if (settingRow) setSettings(settingRow);
-    } catch (e) { setError(e.message || "Could not load shop management data."); }
-    finally { setBusy(false); setReady(true); }
+    } catch (e) {
+      console.error("Lumi shop administration load failed:", e);
+      setError(e.message || "Could not load shop management data. Press Refresh to try again.");
+    } finally {
+      setBusy(false);
+      setReady(true);
+    }
   }, [supabase]);
 
   useEffect(() => {
@@ -66,12 +97,28 @@ export default function LumiShopAdmin() {
     let alive = true;
     (async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) { router.replace("/admin"); return; }
-        const { data: allowed, error: roleError } = await supabase.rpc("is_lumi_admin");
-        if (roleError || allowed !== true) { await supabase.auth.signOut(); router.replace("/admin"); return; }
+        const sessionResult = await withTimeout(supabase.auth.getSession(), "Admin session check", 10000);
+        const session = sessionResult.data?.session;
+        if (!session) {
+          if (alive) { setError("Your admin session has expired. Please sign in again."); setReady(true); }
+          router.replace("/admin");
+          return;
+        }
+        const roleResult = await withTimeout(supabase.rpc("is_lumi_admin"), "Admin permission check", 10000);
+        if (roleResult.error) throw new Error(`Could not verify CEO access: ${roleResult.error.message}`);
+        if (roleResult.data !== true) {
+          await supabase.auth.signOut();
+          router.replace("/admin");
+          return;
+        }
         if (alive) await load();
-      } catch { router.replace("/admin"); }
+      } catch (authError) {
+        console.error("Lumi shop administration access check failed:", authError);
+        if (alive) {
+          setError(authError.message || "Could not verify shop administration access. Press Refresh to try again.");
+          setReady(true);
+        }
+      }
     })();
     return () => { alive = false; };
   }, [supabase, router, load]);
