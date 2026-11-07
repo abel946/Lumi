@@ -262,7 +262,7 @@ export default function LumiShopAdmin() {
       <div className="admin-info">Videos are capped at 10 seconds in the customer player. Keep promotions relevant and avoid placing ads over cycle-tracking screens.</div>
       {!ads.length ? <div className="admin-empty">No advertisements uploaded yet.</div> : ads.map(ad=><article className="admin-ad" key={ad.id}>
         <div className="admin-ad-preview">{ad.media_type==="video" ? <video src={ad.media_url} muted playsInline controls /> : <img src={ad.media_url} alt={ad.title} />}</div>
-        <div className="admin-ad-detail"><b>{ad.title}</b><small>{ad.media_type.toUpperCase()} · {ad.duration_seconds}s · {new Date(ad.created_at).toLocaleDateString()}</small>{ad.target_url && <small>{ad.target_url}</small>}<span className={ad.is_active?"ad-live":"ad-paused"}>{ad.is_active?"Active":"Paused"}</span></div>
+        <div className="admin-ad-detail"><b>{ad.title}</b><small>{ad.media_type.toUpperCase()} · {ad.duration_seconds}s · {new Date(ad.created_at).toLocaleDateString()}</small><small>{Number(ad.view_count||0).toLocaleString()} views · {Number(ad.click_count||0).toLocaleString()} clicks</small>{ad.target_url && <small>{ad.target_url}</small>}<span className={ad.is_active?"ad-live":"ad-paused"}>{ad.is_active?"Active":"Paused"}</span></div>
         <div className="admin-ad-actions"><button className={ad.is_active?"admin-quiet":"admin-approve"} disabled={busy} onClick={()=>toggleAdvertisement(ad)}>{ad.is_active?"Pause":"Activate"}</button><button className="admin-reject" disabled={busy} onClick={()=>deleteAdvertisement(ad)}>Delete</button></div>
       </article>)}
     </section>}
