@@ -69,10 +69,6 @@ export default function Home() {
   const supabase=getSupabaseBrowserClient();
   supabase.auth.getSession().then(({data})=>{setSession(data.session);setAuthReady(true);});
   const {data:{subscription}}=supabase.auth.onAuthStateChange((_event,nextSession)=>{setSession(nextSession);setAuthReady(true);});
-  const cartSubtotal = shopCart.reduce((sum, entry) => sum + Number(entry.price) * entry.quantity, 0);
- const selectedDeliveryZone = deliveryZones.find(zone => zone.id === deliveryZoneId);
- const cartDeliveryFee = selectedDeliveryZone ? Number(selectedDeliveryZone.fee) : 0;
- const cartTotal = cartSubtotal + cartDeliveryFee;
  return ()=>subscription.unsubscribe();
  },[]);
  useEffect(()=>{try{window.localStorage.setItem("lumi-language",lang);}catch{}},[lang]);
@@ -209,6 +205,10 @@ export default function Home() {
  const fmt=d=>d.toLocaleDateString(lang==="am"?"am-ET":"en-US",{month:"short",day:"numeric"});
  const toggle=s=>setSymptoms(v=>v.includes(s)?v.filter(x=>x!==s):[...v,s]);
  const symptomOptions=[["cramps","♧"],["tender","♡"],["headache","☼"],["illness","＋"],["poorSleep","☾"]];
+ const cartSubtotal = shopCart.reduce((sum, entry) => sum + Number(entry.price) * entry.quantity, 0);
+ const selectedDeliveryZone = deliveryZones.find(zone => zone.id === deliveryZoneId);
+ const cartDeliveryFee = selectedDeliveryZone ? Number(selectedDeliveryZone.fee) : 0;
+ const cartTotal = cartSubtotal + cartDeliveryFee;
  if(!authReady) return <main className="auth-loading"><div className="auth-brand">✿ <span>lumi <small>ሉሚ</small></span></div><div className="auth-loader"></div></main>;
  if(!session) return <main className="login-shell">
   <div className="login-top"><div className="auth-brand"><span className="auth-mark">✿</span><span>lumi <small>ሉሚ</small></span></div><button className="lang" onClick={()=>setLang(lang==="en"?"am":"en")}>{lang==="en"?"አማ":"EN"} ⇄</button></div>
