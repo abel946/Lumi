@@ -22,17 +22,23 @@ export default function LumiShopAdmin() {
   const [settings, setSettings] = useState({ commission_rate: 10, default_delivery_fee: 0, currency: "ETB" });
   const [zoneForm, setZoneForm] = useState({ region: "", city: "", fee: "" });
   const [reviewNotes, setReviewNotes] = useState({});
+  const [ads, setAds] = useState([]);
+  const [adTitle, setAdTitle] = useState("");
+  const [adTargetUrl, setAdTargetUrl] = useState("");
+  const [adFile, setAdFile] = useState(null);
+  const [adDuration, setAdDuration] = useState(10);
 
   const load = useCallback(async () => {
     setBusy(true); setError("");
     try {
-      const [{ data: pending, error: pErr }, { data: orderRows, error: oErr }, { data: zoneRows, error: zErr }, { data: settingRow, error: sErr }] = await Promise.all([
+      const [{ data: pending, error: pErr }, { data: orderRows, error: oErr }, { data: zoneRows, error: zErr }, { data: settingRow, error: sErr }, { data: adRows, error: adError }] = await Promise.all([
         supabase.from("shop_product_submissions").select("*").order("created_at", { ascending: false }),
         supabase.from("shop_orders").select("*,shop_order_items(id,product_name,quantity,unit_price,line_total)").order("created_at", { ascending: false }),
         supabase.from("delivery_zones").select("*").order("region").order("city"),
-        supabase.from("shop_settings").select("commission_rate,default_delivery_fee,currency").eq("id", true).maybeSingle()
+        supabase.from("shop_settings").select("commission_rate,default_delivery_fee,currency").eq("id", true).maybeSingle(),
+        supabase.from("shop_advertisements").select("*").order("created_at", { ascending: false })
       ]);
-      if (pErr) throw pErr; if (oErr) throw oErr; if (zErr) throw zErr; if (sErr) throw sErr;
+      if (pErr) throw pErr; if (oErr) throw oErr; if (zErr) throw zErr; if (sErr) throw sErr; if (adError) throw adError;
       const decorated = await Promise.all((pending || []).map(async row => {
         const urls = await Promise.all((row.image_paths || []).map(async path => {
           const { data } = await supabase.storage.from("lumi-product-submissions").createSignedUrl(path, 3600);
@@ -40,7 +46,7 @@ export default function LumiShopAdmin() {
         }));
         return { ...row, previewUrls: urls.filter(Boolean) };
       }));
-      setSubmissions(decorated); setOrders(orderRows || []); setZones(zoneRows || []);
+      setSubmissions(decorated); setOrders(orderRows || []); setZones(zoneRows || []); setAds(adRows || []);
       if (settingRow) setSettings(settingRow);
     } catch (e) { setError(e.message || "Could not load shop management data."); }
     finally { setBusy(false); setReady(true); }
@@ -155,6 +161,59 @@ export default function LumiShopAdmin() {
     finally { setBusy(false); }
   }
 
+
+  async function addAdvertisement(event) {
+    event.preventDefault(); setBusy(true); setError(""); setMessage("");
+    try {
+      if (!adTitle.trim() || !adFile) throw new Error("Enter an ad title and choose an image or video.");
+      const isVideo = adFile.type.startsWith("video/");
+      const allowed = isVideo ? ["video/mp4","video/webm"] : ["image/jpeg","image/png","image/webp"];
+      if (!allowed.includes(adFile.type)) throw new Error("Use MP4/WebM video or JPG/PNG/WebP image.");
+      if (adFile.size > (isVideo ? 50 : 10) * 1024 * 1024) throw new Error(isVideo ? "Video must be 50 MB or smaller." : "Image must be 10 MB or smaller.");
+      const path = "ads/" + crypto.randomUUID() + "-" + adFile.name.replace(/[^a-zA-Z0-9._-]/g,"-");
+      const { error: uploadError } = await supabase.storage.from("lumi-advertisements").upload(path, adFile, { contentType: adFile.type, cacheControl: "3600", upsert: false });
+      if (uploadError) throw uploadError;
+      const { data: publicData } = supabase.storage.from("lumi-advertisements").getPublicUrl(path);
+      const { data: { user } } = await supabase.auth.getUser();
+      const { error: insertError } = await supabase.from("shop_advertisements").insert({
+        title: adTitle.trim(), media_type: isVideo ? "video" : "image", media_path: path,
+        media_url: publicData.publicUrl, target_url: adTargetUrl.trim() || null,
+        duration_seconds: isVideo ? Math.min(10, Math.max(1, Number(adDuration) || 10)) : 10,
+        is_active: true, created_by: user?.id || null
+      });
+      if (insertError) throw insertError;
+      setAdTitle(""); setAdTargetUrl(""); setAdFile(null); setAdDuration(10);
+      const picker = document.getElementById("lumi-ad-file"); if (picker) picker.value = "";
+      setMessage("Advertisement uploaded and activated."); await load();
+    } catch (e) { setError(e.message || "Could not upload advertisement."); }
+    finally { setBusy(false); }
+  }
+
+  async function toggleAdvertisement(ad) {
+    setBusy(true); setError(""); setMessage("");
+    try {
+      const { error: updateError } = await supabase.from("shop_advertisements").update({ is_active: !ad.is_active, updated_at: new Date().toISOString() }).eq("id", ad.id);
+      if (updateError) throw updateError;
+      setMessage(ad.is_active ? "Advertisement paused." : "Advertisement activated."); await load();
+    } catch (e) { setError(e.message || "Could not update advertisement."); }
+    finally { setBusy(false); }
+  }
+
+  async function deleteAdvertisement(ad) {
+    if (!window.confirm("Delete this advertisement permanently?")) return;
+    setBusy(true); setError(""); setMessage("");
+    try {
+      const { error: deleteError } = await supabase.from("shop_advertisements").delete().eq("id", ad.id);
+      if (deleteError) throw deleteError;
+      if (ad.media_path) {
+        const { error: storageError } = await supabase.storage.from("lumi-advertisements").remove([ad.media_path]);
+        if (storageError) throw storageError;
+      }
+      setMessage("Advertisement deleted."); await load();
+    } catch (e) { setError(e.message || "Could not delete advertisement."); }
+    finally { setBusy(false); }
+  }
+
   async function logout() { await supabase.auth.signOut(); router.replace("/admin"); }
 
   if (!ready) return <main className="lumi-admin"><div className="admin-card">Loading Lumi shop administration…</div></main>;
@@ -162,7 +221,7 @@ export default function LumiShopAdmin() {
   return <main className="lumi-admin">
     <header className="admin-header"><div><div className="admin-brand">✿ lumi <span>ሉሚ</span></div><p>Women’s Shop · Administration</p></div><button className="admin-quiet" onClick={logout}>Sign out</button></header>
     <nav className="admin-tabs">
-      {[["orders","Orders"],["submissions","Seller review"],["delivery","Delivery areas"],["settings","Shop settings"]].map(([key,label]) => <button key={key} className={tab===key?"active":""} onClick={()=>setTab(key)}>{label}{key==="orders" && orders.length ? <i>{orders.length}</i> : null}{key==="submissions" && submissions.filter(s=>s.status==="pending").length ? <i>{submissions.filter(s=>s.status==="pending").length}</i> : null}</button>)}
+      {[["orders","Orders"],["submissions","Seller review"],["delivery","Delivery areas"],["settings","Shop settings"],["ads","Advertisements"]].map(([key,label]) => <button key={key} className={tab===key?"active":""} onClick={()=>setTab(key)}>{label}{key==="orders" && orders.length ? <i>{orders.length}</i> : null}{key==="submissions" && submissions.filter(s=>s.status==="pending").length ? <i>{submissions.filter(s=>s.status==="pending").length}</i> : null}</button>)}
     </nav>
     {error && <div className="admin-alert error">{error}</div>}{message && <div className="admin-alert success">{message}</div>}
     <div className="admin-toolbar"><span>{busy ? "Updating…" : "Shop management"}</span><button className="admin-quiet" onClick={load} disabled={busy}>Refresh</button></div>
@@ -190,6 +249,23 @@ export default function LumiShopAdmin() {
       {!zones.length ? <div className="admin-empty">No delivery areas configured. The default fee will be used.</div> : zones.map(zone=><div className="admin-zone" key={zone.id}><div><b>{zone.city}</b><small>{zone.region} · {money(zone.fee,zone.currency)}</small></div><button className={zone.is_active?"admin-quiet":"admin-approve"} disabled={busy} onClick={()=>toggleZone(zone)}>{zone.is_active?"Active · Disable":"Disabled · Enable"}</button></div>)}
     </section>}
 
+
+    {tab==="ads" && <section className="admin-section">
+      <div className="admin-section-title"><div><h1>Advertisements</h1><p>Upload short promotions shown at the top of the customer Buying screen.</p></div><b>{ads.length} total</b></div>
+      <form className="admin-form ad-form" onSubmit={addAdvertisement}>
+        <label>Ad title<input value={adTitle} onChange={e=>setAdTitle(e.target.value)} placeholder="Promotion title" maxLength={120} required /></label>
+        <label>Click-through link (optional)<input type="url" value={adTargetUrl} onChange={e=>setAdTargetUrl(e.target.value)} placeholder="https://example.com" /></label>
+        <label>Image or video<input id="lumi-ad-file" type="file" accept="video/mp4,video/webm,image/jpeg,image/png,image/webp" onChange={e=>setAdFile(e.target.files?.[0] || null)} required /><small>MP4/WebM up to 50 MB or JPG/PNG/WebP up to 10 MB.</small></label>
+        {adFile?.type?.startsWith("video/") && <label>Video duration (seconds, max 10)<input type="number" min="1" max="10" value={adDuration} onChange={e=>setAdDuration(e.target.value)} required /></label>}
+        <button className="admin-approve" disabled={busy || !adFile}>Upload & activate</button>
+      </form>
+      <div className="admin-info">Videos are capped at 10 seconds in the customer player. Keep promotions relevant and avoid placing ads over cycle-tracking screens.</div>
+      {!ads.length ? <div className="admin-empty">No advertisements uploaded yet.</div> : ads.map(ad=><article className="admin-ad" key={ad.id}>
+        <div className="admin-ad-preview">{ad.media_type==="video" ? <video src={ad.media_url} muted playsInline controls /> : <img src={ad.media_url} alt={ad.title} />}</div>
+        <div className="admin-ad-detail"><b>{ad.title}</b><small>{ad.media_type.toUpperCase()} · {ad.duration_seconds}s · {new Date(ad.created_at).toLocaleDateString()}</small>{ad.target_url && <small>{ad.target_url}</small>}<span className={ad.is_active?"ad-live":"ad-paused"}>{ad.is_active?"Active":"Paused"}</span></div>
+        <div className="admin-ad-actions"><button className={ad.is_active?"admin-quiet":"admin-approve"} disabled={busy} onClick={()=>toggleAdvertisement(ad)}>{ad.is_active?"Pause":"Activate"}</button><button className="admin-reject" disabled={busy} onClick={()=>deleteAdvertisement(ad)}>Delete</button></div>
+      </article>)}
+    </section>}
     {tab==="settings" && <section className="admin-section"><div className="admin-section-title"><div><h1>Shop settings</h1><p>Configure Lumi’s marketplace commission and default delivery fee.</p></div></div>
       <form className="admin-form settings-form" onSubmit={saveSettings}><label>Platform commission (%)<input type="number" min="0" max="100" step="0.01" value={settings.commission_rate} onChange={e=>setSettings(v=>({...v,commission_rate:e.target.value}))}/><small>Calculated internally on each order; not added to the customer’s bill.</small></label><label>Default delivery fee (ETB)<input type="number" min="0" step="0.01" value={settings.default_delivery_fee} onChange={e=>setSettings(v=>({...v,default_delivery_fee:e.target.value}))}/></label><button className="admin-approve" disabled={busy}>Save settings</button></form>
       <div className="admin-info">Online payments are intentionally not connected yet. Orders remain payment-pending until a payment provider is added later.</div>
