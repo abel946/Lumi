@@ -4,6 +4,7 @@ export const metadata = {
   title: "Lumi admin",
   applicationName: "Lumi admin",
   description: "Lumi administrator portal and shop management.",
+  manifest: "/admin/manifest.webmanifest",
   appleWebApp: { capable: true, statusBarStyle: "default", title: "Lumi admin" },
   icons: {
     icon: [{ url: "/icons/lumi-admin.svg", type: "image/svg+xml", sizes: "any" }],
