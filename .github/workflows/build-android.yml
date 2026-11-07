@@ -73,10 +73,60 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleDebug
 
-      - name: Upload Lumi APK
+      - name: Upload Lumi debug APK
         uses: actions/upload-artifact@v4
         with:
-          name: lumi-android-apk
+          name: lumi-android-debug-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 30
+
+      - name: Configure permanent Lumi release signing
+        if: ${{ secrets.LUMI_KEYSTORE_BASE64 != '' }}
+        env:
+          LUMI_KEYSTORE_BASE64: ${{ secrets.LUMI_KEYSTORE_BASE64 }}
+          LUMI_KEYSTORE_PASSWORD: ${{ secrets.LUMI_KEYSTORE_PASSWORD }}
+          LUMI_KEY_ALIAS: ${{ secrets.LUMI_KEY_ALIAS }}
+          LUMI_KEY_PASSWORD: ${{ secrets.LUMI_KEY_PASSWORD }}
+        run: |
+          echo "$LUMI_KEYSTORE_BASE64" | base64 --decode > android/app/lumi-release-key.p12
+          cat > android/app/release-signing.gradle <<'GRADLE'
+          android {
+              signingConfigs {
+                  release {
+                      storeFile file(System.getenv("LUMI_KEYSTORE_PATH"))
+                      storePassword System.getenv("LUMI_KEYSTORE_PASSWORD")
+                      keyAlias System.getenv("LUMI_KEY_ALIAS")
+                      keyPassword System.getenv("LUMI_KEY_PASSWORD")
+                  }
+              }
+              buildTypes {
+                  release {
+                      signingConfig signingConfigs.release
+                  }
+              }
+          }
+          GRADLE
+          printf "\napply from: 'release-signing.gradle'\n" >> android/app/build.gradle
+
+      - name: Build signed Lumi release APK
+        if: ${{ secrets.LUMI_KEYSTORE_BASE64 != '' }}
+        working-directory: android
+        env:
+          LUMI_KEYSTORE_PATH: app/lumi-release-key.p12
+          LUMI_KEYSTORE_PASSWORD: ${{ secrets.LUMI_KEYSTORE_PASSWORD }}
+          LUMI_KEY_ALIAS: ${{ secrets.LUMI_KEY_ALIAS }}
+          LUMI_KEY_PASSWORD: ${{ secrets.LUMI_KEY_PASSWORD }}
+        run: |
+          ./gradlew assembleRelease
+          $ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)/apksigner verify --verbose app/build/outputs/apk/release/app-release.apk
+          rm -f app/lumi-release-key.p12
+
+      - name: Upload signed Lumi release APK
+        if: ${{ secrets.LUMI_KEYSTORE_BASE64 != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: lumi-user-release-apk
+          path: android/app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
+          retention-days: 90
