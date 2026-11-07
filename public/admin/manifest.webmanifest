@@ -2,7 +2,7 @@
   "id": "/admin/",
   "name": "Lumi admin",
   "short_name": "Lumi admin",
-  "description": "Lumi shop and platform administration.",
+  "description": "Lumi administrator portal and shop management.",
   "start_url": "/admin/",
   "scope": "/admin/",
   "display": "standalone",
@@ -16,12 +16,6 @@
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"
-    },
-    {
-      "src": "/icons/lumi-admin.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "maskable"
     }
   ]
 }
