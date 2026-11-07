@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { analyzeFertility } from "../lib/fertility-engine.js";
 import { getSupabaseBrowserClient } from "../lib/supabase-browser.js";
 import { getActiveShopCategories, getMyProductSubmissions, submitProductForReview } from "../lib/shop-submissions.js";
+import { saveCycleAndDailyObservation } from "../lib/cycle-data.js";
 
 const copy = {
  en: {
@@ -17,7 +18,7 @@ const copy = {
   breastfeeding:"Breastfeeding or recently postpartum", yes:"Yes", no:"No", calendar:"Cycle overview", legend:"Period", fertileDays:"Potentially fertile estimate", unknown:"Uncertain",
   full:"View my full fertility report", insight:"How this report works", insightText:"Calendar dates can suggest when fertility may rise, but cannot identify infertile days on their own. Cervical mucus, temperature trends and cycle context matter.",
   disclaimer:"Lumi supports natural family-planning awareness. No calendar prediction can guarantee pregnancy prevention. If avoiding pregnancy is important, treat uncertain days as potentially fertile and consider learning a validated fertility-awareness method with a trained instructor.",
-  saved:"Preview only: this observation is not stored in your account yet.", start:"Start with your cycle details", intro:"Add your recent period date and observations to build your personal report.",
+  saved:"Today’s observation has been saved to your Lumi account.", saveFailed:"Could not save. Please sign in and try again.", start:"Start with your cycle details", intro:"Add your recent period date and observations to build your personal report.",
   home:"Home", cycleTab:"My cycle", reportTab:"My report", profile:"Profile", shop:"Women’s shop",
   sellItem:"Sell an item", shopIntro:"Share your products with the Lumi community. Every listing is reviewed before it appears in the shop.",
   productName:"Product name", category:"Category", selectCategory:"Choose a category", description:"Description",
@@ -41,7 +42,7 @@ const copy = {
   calendar:"የዑደት እይታ", legend:"የወር አበባ", fertileDays:"የመራቢያ ግምት", unknown:"ያልተረጋገጠ",
   full:"ሙሉ የመራቢያ ሪፖርቴን እይ", insight:"ይህ ሪፖርት እንዴት ይሰራል?", insightText:"የዑደት ቀናት መራቢያ መቼ ሊጨምር እንደሚችል ሊጠቁሙ ይችላሉ፤ ብቻቸውን ግን መራቢያ የሌለባቸውን ቀናት አያረጋግጡም።",
   disclaimer:"ሉሚ የተፈጥሮ የቤተሰብ ዕቅድ ግንዛቤን ይደግፋል። ማንኛውም የቀን ግምት እርግዝናን እንደሚከላከል ዋስትና አይሰጥም።",
-  saved:"የቅድመ እይታ ብቻ ነው፤ ምልከታው ገና በመለያዎ ውስጥ አልተቀመጠም።", start:"በዑደት መረጃዎ ይጀምሩ", intro:"የመጨረሻ ወር አበባዎን ቀንና ምልከታዎችን ያስገቡ።",
+  saved:"የዛሬ ምልከታዎ በሉሚ መለያዎ ውስጥ ተቀምጧል።", saveFailed:"መረጃውን ማስቀመጥ አልተቻለም። እባክዎ ይግቡና እንደገና ይሞክሩ።", start:"በዑደት መረጃዎ ይጀምሩ", intro:"የመጨረሻ ወር አበባዎን ቀንና ምልከታዎችን ያስገቡ።",
   home:"መነሻ", cycleTab:"ዑደቴ", reportTab:"ሪፖርቴ", profile:"መገለጫ", shop:"የሴቶች ሱቅ",
   sellItem:"ዕቃ ይሽጡ", shopIntro:"ምርቶችዎን ለሉሚ ማህበረሰብ ያቅርቡ። በሱቁ ከመታየታቸው በፊት በአስተዳዳሪ ይገመገማሉ።",
   productName:"የምርት ስም", category:"ምድብ", selectCategory:"ምድብ ይምረጡ", description:"መግለጫ",
@@ -66,6 +67,7 @@ export default function Home() {
  const [postpartumWeeks,setPostpartumWeeks]=useState("");
  const [irregularBleeding,setIrregularBleeding]=useState(false);
  const [saved,setSaved]=useState(false);
+ const [saveError,setSaveError]=useState("");
  const [tab,setTab]=useState("home");
  const [shopUser,setShopUser]=useState(null);
  const [shopCategories,setShopCategories]=useState([]);
@@ -154,7 +156,17 @@ export default function Home() {
   {tab==="home" && <>
    <section className="status-card"><div className="card-top"><span className="eyebrow">{t.today}</span><span className="date-pill">{fmt(today)}</span></div><div className="status-row"><div><div className="status-title">{statusLabel}</div><p>{statusExplanation}</p></div><div className="status-icon">?</div></div><div className="status-foot"><span>DAY {cycleDay} · {t.cycleTab.toUpperCase()}</span><span className="dot yellow"></span></div></section>
    <section className="panel"><div className="section-heading"><div><span className="eyebrow">✧ YOUR PERSONAL SUMMARY</span><h2>{t.report}</h2></div><span className="sparkle">✧</span></div><p className="muted">{t.reportText}</p><div className="estimate-box"><div className="estimate-label"><span className="dot red"></span>{t.fertile}</div><strong>{statusLabel}</strong><small>{statusExplanation}</small></div><p className="caution">{t.note}</p><button className="outline-button" onClick={()=>setTab("report")}>{t.full} <span>→</span></button></section>
-   <section className="panel"><div className="section-heading"><div><span className="eyebrow">✧ DAILY CHECK-IN</span><h2>{t.observations}</h2></div><span className="sparkle">♡</span></div><label className="field-label">{t.temp} (°C)</label><input className="input" type="number" step="0.01" placeholder="e.g. 36.45" value={temp} onChange={e=>setTemp(e.target.value)}/><label className="field-label">{t.mucus}</label><select className="input" value={mucus} onChange={e=>setMucus(e.target.value)}><option value="">{t.choose}</option>{["dry","sticky","creamy","watery","egg"].map(v=><option key={v} value={v}>{t[v]}</option>)}</select><label className="field-label">{t.symptoms}</label><div className="chips">{symptomOptions.map(([s,icon])=><button key={s} onClick={()=>toggle(s)} className={symptoms.includes(s)?"chip selected":"chip"}>{icon} {t[s]}</button>)}</div><label className="field-label">{t.breastfeeding}</label><div className="switchrow"><button className={!breastfeeding?"choice selected":"choice"} onClick={()=>setBreastfeeding(false)}>{t.no}</button><button className={breastfeeding?"choice selected":"choice"} onClick={()=>setBreastfeeding(true)}>{t.yes}</button></div><label className="field-label">{t.postpartumWeeks}</label><input className="input" type="number" min="0" max="104" placeholder="e.g. 8" value={postpartumWeeks} onChange={e=>setPostpartumWeeks(e.target.value)}/><label className="field-label">{t.irregularBleeding}</label><div className="switchrow"><button className={!irregularBleeding?"choice selected":"choice"} onClick={()=>setIrregularBleeding(false)}>{t.no}</button><button className={irregularBleeding?"choice selected":"choice"} onClick={()=>setIrregularBleeding(true)}>{t.yes}</button></div><button className="primary-button" onClick={()=>setSaved(true)}>{t.save} <span>✧</span></button>{saved&&<p className="success">✓ {t.saved}</p>}</section>
+   <section className="panel"><div className="section-heading"><div><span className="eyebrow">✧ DAILY CHECK-IN</span><h2>{t.observations}</h2></div><span className="sparkle">♡</span></div><label className="field-label">{t.temp} (°C)</label><input className="input" type="number" step="0.01" placeholder="e.g. 36.45" value={temp} onChange={e=>setTemp(e.target.value)}/><label className="field-label">{t.mucus}</label><select className="input" value={mucus} onChange={e=>setMucus(e.target.value)}><option value="">{t.choose}</option>{["dry","sticky","creamy","watery","egg"].map(v=><option key={v} value={v}>{t[v]}</option>)}</select><label className="field-label">{t.symptoms}</label><div className="chips">{symptomOptions.map(([s,icon])=><button key={s} onClick={()=>toggle(s)} className={symptoms.includes(s)?"chip selected":"chip"}>{icon} {t[s]}</button>)}</div><label className="field-label">{t.breastfeeding}</label><div className="switchrow"><button className={!breastfeeding?"choice selected":"choice"} onClick={()=>setBreastfeeding(false)}>{t.no}</button><button className={breastfeeding?"choice selected":"choice"} onClick={()=>setBreastfeeding(true)}>{t.yes}</button></div><label className="field-label">{t.postpartumWeeks}</label><input className="input" type="number" min="0" max="104" placeholder="e.g. 8" value={postpartumWeeks} onChange={e=>setPostpartumWeeks(e.target.value)}/><label className="field-label">{t.irregularBleeding}</label><div className="switchrow"><button className={!irregularBleeding?"choice selected":"choice"} onClick={()=>setIrregularBleeding(false)}>{t.no}</button><button className={irregularBleeding?"choice selected":"choice"} onClick={()=>setIrregularBleeding(true)}>{t.yes}</button></div><button className="primary-button" onClick={async()=>{
+  setSaved(false);setSaveError("");
+  try {
+   await saveCycleAndDailyObservation({
+    observedOn:todayISO,lastPeriodStart:lastPeriod,averageCycleLength:cycleLength,
+    cervicalMucus:mucus,basalTemperatureC:temp,symptoms,
+    breastfeeding,postpartumWeeks,irregularBleeding
+   });
+   setSaved(true);
+  } catch(error) { setSaveError(error?.message || t.saveFailed); }
+ }}>{t.save} <span>✧</span></button>{saved&&<p className="success">✓ {t.saved}</p>}{saveError&&<p className="shop-error">{saveError}</p>}</section>
   </>}
   {tab==="cycle" && <section className="panel"><span className="eyebrow">✧ CYCLE SETUP</span><h2>{t.start}</h2><p className="muted">{t.intro}</p><label className="field-label">{t.period}</label><input className="input" type="date" value={lastPeriod} onChange={e=>setLastPeriod(e.target.value)}/><label className="field-label">{t.cycle} · {cycleLength} {t.days}</label><input type="range" min="21" max="45" value={cycleLength} onChange={e=>setCycleLength(Number(e.target.value))}/><div className="range-labels"><span>21 {t.days}</span><span>45 {t.days}</span></div><div className="estimate-box"><div className="estimate-label"><span className="dot red"></span>{t.fertile}</div><strong>{t.uncertain}</strong><small>{t.note}</small></div><button className="primary-button" onClick={()=>setTab("report")}>{t.full} →</button></section>}
   {tab==="report" && <section className="panel"><span className="eyebrow">✧ PERSONAL FERTILITY REPORT</span><h2>{t.report}</h2><p className="muted">{t.reportText}</p><div className="report-line"><span className="date-circle">01</span><div><b>{t.period}</b><small>{fmt(new Date(lastPeriod+"T00:00:00"))}</small></div><span className="badge pink">{t.legend}</span></div><div className="report-line"><span className="date-circle">02</span><div><b>{t.fertile}</b><small>{statusExplanation}</small></div><span className="badge redbg">{statusLabel}</span></div><div className="report-line"><span className="date-circle">03</span><div><b>{t.uncertain}</b><small>{t.uncertainText}</small></div><span className="badge yellowbg">!</span></div><div className="info-box"><b>{t.insight}</b><p>{t.insightText}</p></div><p className="disclaimer">{t.disclaimer}</p></section>}
