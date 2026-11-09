@@ -1,6 +1,8 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import { analyzeFertility } from "../lib/fertility-engine.js";
+import { buildDailyFertilityNotification, countLearningDays } from "../lib/fertility-notification.js";
+import FertilityNotificationCenter from "./components/fertility-notification-center.jsx";
 import { getSupabaseBrowserClient } from "../lib/supabase-browser.js";
 import { getActiveShopCategories, getMyProductSubmissions, getPublishedShopProducts, getShopDeliveryZones, getMyShopOrders, placeShopOrder, submitProductForReview } from "../lib/shop-submissions.js";
 import { loadMyCycleData, saveCycleAndDailyObservation } from "../lib/cycle-data.js";
@@ -226,10 +228,13 @@ export default function Home() {
   postpartumWeeks: postpartumWeeks === "" ? undefined : Number(postpartumWeeks),
   irregularBleeding
  }), [todayISO,lastPeriod,cycleLength,mucus,temp,symptoms,breastfeeding,postpartumWeeks,irregularBleeding,observationHistory]);
- const statusLabel = fertilityResult.status === "potentially-fertile" ? t.potentiallyFertile : t.uncertain;
- const statusExplanation = lang === "am"
-  ? (fertilityResult.status === "potentially-fertile" ? "የመራቢያ ምልክት ታይቷል። ይህን ቀን ሊሆን እንደሚችል የመራቢያ ቀን ይቁጠሩ።" : "በቂ እና የተረጋገጠ መረጃ የለም። ይህን ቀን እንደ ያልተረጋገጠ ይቁጠሩ።")
-  : fertilityResult.explanation;
+ const learningDays = countLearningDays([
+  ...observationHistory,
+  { observed_on: todayISO, cervical_mucus: mucus === "egg" ? "egg-white" : mucus, basal_temperature_c: temp === "" ? null : Number(temp), symptoms }
+ ]);
+ const dailyReport = buildDailyFertilityNotification({ fertilityResult, learningDays, today: todayISO, language: lang });
+ const statusLabel = dailyReport.label;
+ const statusExplanation = dailyReport.explanation;
  const cycleDay= Math.max(1,Math.floor((today-new Date(lastPeriod+"T00:00:00"))/86400000)+1);
  const estimate=useMemo(()=>{
   const ovulation=cycleLength-14;
@@ -287,7 +292,7 @@ export default function Home() {
  }}>{t.save} <span>✧</span></button>{saved&&<p className="success">✓ {t.saved}</p>}{saveError&&<p className="shop-error">{saveError}</p>}</section>
   </>}
   {tab==="cycle" && <section className="panel"><span className="eyebrow">✧ CYCLE SETUP</span><h2>{t.start}</h2><p className="muted">{t.intro}</p><label className="field-label">{t.period}</label><input className="input" type="date" value={lastPeriod} onChange={e=>setLastPeriod(e.target.value)}/><label className="field-label">{t.cycle} · {cycleLength} {t.days}</label><input type="range" min="21" max="45" value={cycleLength} onChange={e=>setCycleLength(Number(e.target.value))}/><div className="range-labels"><span>21 {t.days}</span><span>45 {t.days}</span></div><div className="estimate-box"><div className="estimate-label"><span className="dot red"></span>{t.fertile}</div><strong>{t.uncertain}</strong><small>{t.note}</small></div><button className="primary-button" onClick={()=>setTab("report")}>{t.full} →</button></section>}
-  {tab==="report" && <section className="panel"><span className="eyebrow">✧ PERSONAL FERTILITY REPORT</span><h2>{t.report}</h2><p className="muted">{t.reportText}</p><div className="report-line"><span className="date-circle">01</span><div><b>{t.period}</b><small>{fmt(new Date(lastPeriod+"T00:00:00"))}</small></div><span className="badge pink">{t.legend}</span></div><div className="report-line"><span className="date-circle">02</span><div><b>{t.fertile}</b><small>{statusExplanation}</small></div><span className="badge redbg">{statusLabel}</span></div><div className="report-line"><span className="date-circle">03</span><div><b>{t.uncertain}</b><small>{t.uncertainText}</small></div><span className="badge yellowbg">!</span></div><div className="info-box"><b>{t.insight}</b><p>{t.insightText}</p></div><p className="disclaimer">{t.disclaimer}</p></section>}
+  {tab==="report" && <><section className="panel"><span className="eyebrow">✧ PERSONAL FERTILITY REPORT</span><h2>{t.report}</h2><p className="muted">{t.reportText}</p><div className="report-line"><span className="date-circle">01</span><div><b>{t.period}</b><small>{fmt(new Date(lastPeriod+"T00:00:00"))}</small></div><span className="badge pink">{t.legend}</span></div><div className="report-line"><span className="date-circle">02</span><div><b>{t.fertile}</b><small>{statusExplanation}</small></div><span className="badge redbg">{statusLabel}</span></div><div className="report-line"><span className="date-circle">03</span><div><b>{t.uncertain}</b><small>{t.uncertainText}</small></div><span className="badge yellowbg">!</span></div><div className="info-box"><b>{t.insight}</b><p>{t.insightText}</p></div><p className="disclaimer">{t.disclaimer}</p></section><FertilityNotificationCenter language={lang} observations={observationHistory} /></>}
 
   {tab==="shop" && <section className="panel shop-panel">
     <span className="eyebrow">✧ LUMI WOMEN’S SHOP</span><h2>{t.shop}</h2>

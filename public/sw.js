@@ -1,4 +1,4 @@
-const CACHE_NAME = "lumi-shell-v3";
+const CACHE_NAME = "lumi-shell-v4";
 
 // Do not let an optional/offline cache failure prevent the service worker
 // from installing. The previous cache.addAll() included a missing manifest
@@ -32,4 +32,38 @@ self.addEventListener("fetch", event => {
       })
     );
   }
+});
+
+self.addEventListener("push", event => {
+  let payload = {};
+  try {
+    payload = event.data ? event.data.json() : {};
+  } catch {
+    payload = { body: event.data ? event.data.text() : "Your Lumi daily update is ready." };
+  }
+  const title = payload.title || "Lumi · Daily update";
+  const options = {
+    body: payload.body || "Your daily fertility report is ready. Open Lumi to read it.",
+    icon: payload.icon || "/icons/lumi.svg",
+    badge: payload.badge || "/icons/lumi.svg",
+    tag: payload.tag || "lumi-daily-update",
+    renotify: false,
+    data: payload.data || { url: "/" },
+  };
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+self.addEventListener("notificationclick", event => {
+  event.notification.close();
+  const destination = new URL(event.notification.data?.url || "/", self.location.origin).href;
+  event.waitUntil((async () => {
+    const windows = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+    for (const client of windows) {
+      if (client.url.startsWith(self.location.origin) && "focus" in client) {
+        await client.navigate(destination);
+        return client.focus();
+      }
+    }
+    return self.clients.openWindow(destination);
+  })());
 });
