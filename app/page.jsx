@@ -14,7 +14,7 @@ const copy = {
   report:"My fertility report", reportText:"Your report uses your cycle dates and daily observations. It never assumes every cycle is the same.",
   period:"Last period started", cycle:"Usual cycle length", days:"days", update:"Update my details",
   fertile:"Fertility window status", from:"From", to:"To", note:"Lumi is not assigning fertile or lower-fertility dates yet. We are building the observation-based method; until it is validated, this report stays uncertain rather than guessing.",
-  observations:"Today's observations", temp:"Basal body temperature", mucus:"Cervical mucus", symptoms:"Symptoms", save:"Save today's observations",
+  observations:"Today's observations", temp:"Basal body temperature", mucus:"Cervical mucus", symptoms:"Symptoms", save:"Save today's observations", editObservation:"Edit today's observation", saving:"Saving…",
   choose:"Choose an observation", dry:"Dry", sticky:"Sticky", creamy:"Creamy", watery:"Watery", egg:"Egg-white / slippery",
   none:"No symptoms", cramps:"Cramps", tender:"Breast tenderness", headache:"Headache", illness:"Illness / fever", poorSleep:"Poor sleep",
   breastfeeding:"Breastfeeding or recently postpartum", yes:"Yes", no:"No", calendar:"Cycle overview", legend:"Period", fertileDays:"Potentially fertile estimate", unknown:"Uncertain",
@@ -37,7 +37,7 @@ const copy = {
   report:"የመራቢያ ሪፖርቴ", reportText:"ሪፖርቱ የዑደት ቀናትዎንና ዕለታዊ ምልከታዎችዎን ይጠቀማል።",
   period:"የመጨረሻ ወር አበባ የጀመረበት ቀን", cycle:"የተለመደ የዑደት ርዝመት", days:"ቀናት", update:"መረጃዬን አዘምን",
   fertile:"የመራቢያ ሁኔታ", from:"ከ", to:"እስከ", note:"የተረጋገጠ የምልከታ ዘዴ እስኪዘጋጅ ድረስ ሉሚ የመራቢያ ወይም ዝቅተኛ የመራቢያ ቀናትን በግምት አይመድብም።",
-  observations:"የዛሬ ምልከታዎች", temp:"የጠዋት የሰውነት ሙቀት", mucus:"የማህጸን ፈሳሽ", symptoms:"ምልክቶች", save:"የዛሬን ምልከታ መዝግብ",
+  observations:"የዛሬ ምልከታዎች", temp:"የጠዋት የሰውነት ሙቀት", mucus:"የማህጸን ፈሳሽ", symptoms:"ምልክቶች", save:"የዛሬን ምልከታ መዝግብ", editObservation:"የዛሬን ምልከታ አስተካክል", saving:"በማስቀመጥ ላይ…",
   choose:"ምልከታ ይምረጡ", dry:"ደረቅ", sticky:"የሚጣበቅ", creamy:"ክሬም ያለ", watery:"ውሃማ", egg:"እንቁላል ነጭ የሚመስል",
   none:"ምንም የለም", cramps:"ቁርጠት", tender:"የጡት ህመም", headache:"ራስ ምታት", illness:"ህመም / ትኩሳት", poorSleep:"እንቅልፍ ማጣት",
   breastfeeding:"ጡት ማጥባት ወይም በቅርቡ ከወሊድ በኋላ", yes:"አዎ", no:"አይ",
@@ -107,6 +107,7 @@ export default function Home() {
  const [postpartumWeeks,setPostpartumWeeks]=useState("");
  const [irregularBleeding,setIrregularBleeding]=useState(false);
  const [saved,setSaved]=useState(false);
+  const [saveBusy,setSaveBusy]=useState(false);
  const [saveError,setSaveError]=useState("");
  const [tab,setTab]=useState("home");
  const [shopUser,setShopUser]=useState(null);
@@ -160,6 +161,8 @@ export default function Home() {
    }
    setObservationHistory(observations || []);
    const todayRecord = (observations || []).find(row => row.observed_on === todayISO);
+   setSaved(Boolean(todayRecord));
+   setSaveError("");
    setTemp(todayRecord?.basal_temperature_c == null ? "" : String(todayRecord.basal_temperature_c));
    setMucus(todayRecord?.cervical_mucus === "egg-white" ? "egg" : (todayRecord?.cervical_mucus || ""));
    setSymptoms((todayRecord?.symptoms || []).map(s => s === "poor-sleep" ? "poorSleep" : s === "breast-tenderness" ? "tender" : s));
@@ -278,8 +281,8 @@ export default function Home() {
   {tab==="home" && <>
    <section className="status-card"><div className="card-top"><span className="eyebrow">{t.today}</span><span className="date-pill">{fmt(today)}</span></div><div className="status-row"><div><div className="status-title">{statusLabel}</div><p>{statusExplanation}</p></div><div className="status-icon">?</div></div><div className="status-foot"><span>DAY {cycleDay} · {t.cycleTab.toUpperCase()}</span><span className="dot yellow"></span></div></section>
    <section className="panel"><div className="section-heading"><div><span className="eyebrow">✧ YOUR PERSONAL SUMMARY</span><h2>{t.report}</h2></div><span className="sparkle">✧</span></div><p className="muted">{t.reportText}</p><div className="estimate-box"><div className="estimate-label"><span className="dot red"></span>{t.fertile}</div><strong>{statusLabel}</strong><small>{statusExplanation}</small></div><p className="caution">{t.note}</p><button className="outline-button" onClick={()=>setTab("report")}>{t.full} <span>→</span></button></section>
-   <section className="panel"><div className="section-heading"><div><span className="eyebrow">✧ DAILY CHECK-IN</span><h2>{t.observations}</h2></div><span className="sparkle">♡</span></div><label className="field-label">{t.temp} (°C)</label><input className="input" type="number" step="0.01" placeholder="e.g. 36.45" value={temp} onChange={e=>setTemp(e.target.value)}/><label className="field-label">{t.mucus}</label><select className="input" value={mucus} onChange={e=>setMucus(e.target.value)}><option value="">{t.choose}</option>{["dry","sticky","creamy","watery","egg"].map(v=><option key={v} value={v}>{t[v]}</option>)}</select><label className="field-label">{t.symptoms}</label><div className="chips">{symptomOptions.map(([s,icon])=><button key={s} onClick={()=>toggle(s)} className={symptoms.includes(s)?"chip selected":"chip"}>{icon} {t[s]}</button>)}</div><label className="field-label">{t.breastfeeding}</label><div className="switchrow"><button className={!breastfeeding?"choice selected":"choice"} onClick={()=>setBreastfeeding(false)}>{t.no}</button><button className={breastfeeding?"choice selected":"choice"} onClick={()=>setBreastfeeding(true)}>{t.yes}</button></div><label className="field-label">{t.postpartumWeeks}</label><input className="input" type="number" min="0" max="104" placeholder="e.g. 8" value={postpartumWeeks} onChange={e=>setPostpartumWeeks(e.target.value)}/><label className="field-label">{t.irregularBleeding}</label><div className="switchrow"><button className={!irregularBleeding?"choice selected":"choice"} onClick={()=>setIrregularBleeding(false)}>{t.no}</button><button className={irregularBleeding?"choice selected":"choice"} onClick={()=>setIrregularBleeding(true)}>{t.yes}</button></div><button className="primary-button" onClick={async()=>{
-  setSaved(false);setSaveError("");
+   <section className="panel"><div className="section-heading"><div><span className="eyebrow">✧ DAILY CHECK-IN</span><h2>{t.observations}</h2></div><span className="sparkle">♡</span></div><fieldset className="observation-fields" disabled={saved || saveBusy}><label className="field-label">{t.temp} (°C)</label><input className="input" type="number" step="0.01" placeholder="e.g. 36.45" value={temp} onChange={e=>setTemp(e.target.value)}/><label className="field-label">{t.mucus}</label><select className="input" value={mucus} onChange={e=>setMucus(e.target.value)}><option value="">{t.choose}</option>{["dry","sticky","creamy","watery","egg"].map(v=><option key={v} value={v}>{t[v]}</option>)}</select><label className="field-label">{t.symptoms}</label><div className="chips">{symptomOptions.map(([s,icon])=><button key={s} onClick={()=>toggle(s)} className={symptoms.includes(s)?"chip selected":"chip"}>{icon} {t[s]}</button>)}</div><label className="field-label">{t.breastfeeding}</label><div className="switchrow"><button className={!breastfeeding?"choice selected":"choice"} onClick={()=>setBreastfeeding(false)}>{t.no}</button><button className={breastfeeding?"choice selected":"choice"} onClick={()=>setBreastfeeding(true)}>{t.yes}</button></div><label className="field-label">{t.postpartumWeeks}</label><input className="input" type="number" min="0" max="104" placeholder="e.g. 8" value={postpartumWeeks} onChange={e=>setPostpartumWeeks(e.target.value)}/><label className="field-label">{t.irregularBleeding}</label><div className="switchrow"><button className={!irregularBleeding?"choice selected":"choice"} onClick={()=>setIrregularBleeding(false)}>{t.no}</button><button className={irregularBleeding?"choice selected":"choice"} onClick={()=>setIrregularBleeding(true)}>{t.yes}</button></div><button className="primary-button" disabled={saveBusy || saved} onClick={async()=>{
+  setSaveBusy(true);setSaveError("");
   try {
    await saveCycleAndDailyObservation({
     observedOn:todayISO,lastPeriodStart:lastPeriod,averageCycleLength:cycleLength,
@@ -289,7 +292,8 @@ export default function Home() {
    setObservationHistory(current => [...current.filter(row => row.observed_on !== todayISO), { observed_on: todayISO, cervical_mucus: mucus === "egg" ? "egg-white" : (mucus || null), basal_temperature_c: temp === "" ? null : Number(temp), symptoms: symptoms.map(s => s === "poorSleep" ? "poor-sleep" : s === "tender" ? "breast-tenderness" : s) }]);
    setSaved(true);
   } catch(error) { setSaveError(error?.message || t.saveFailed); }
- }}>{t.save} <span>✧</span></button>{saved&&<p className="success">✓ {t.saved}</p>}{saveError&&<p className="shop-error">{saveError}</p>}</section>
+  finally { setSaveBusy(false); }
+ }}>{saveBusy?t.saving:t.save} <span>✧</span></button></fieldset>{saved&&<><p className="success">✓ {t.saved}</p><button type="button" className="outline-button observation-edit" onClick={()=>{setSaved(false);setSaveError("");}}>{t.editObservation} ✎</button></>}{saveError&&<p className="shop-error">{saveError}</p>}</section>
   </>}
   {tab==="cycle" && <section className="panel"><span className="eyebrow">✧ CYCLE SETUP</span><h2>{t.start}</h2><p className="muted">{t.intro}</p><label className="field-label">{t.period}</label><input className="input" type="date" value={lastPeriod} onChange={e=>setLastPeriod(e.target.value)}/><label className="field-label">{t.cycle} · {cycleLength} {t.days}</label><input type="range" min="21" max="45" value={cycleLength} onChange={e=>setCycleLength(Number(e.target.value))}/><div className="range-labels"><span>21 {t.days}</span><span>45 {t.days}</span></div><div className="estimate-box"><div className="estimate-label"><span className="dot red"></span>{t.fertile}</div><strong>{t.uncertain}</strong><small>{t.note}</small></div><button className="primary-button" onClick={()=>setTab("report")}>{t.full} →</button></section>}
   {tab==="report" && <><section className="panel"><span className="eyebrow">✧ PERSONAL FERTILITY REPORT</span><h2>{t.report}</h2><p className="muted">{t.reportText}</p><div className="report-line"><span className="date-circle">01</span><div><b>{t.period}</b><small>{fmt(new Date(lastPeriod+"T00:00:00"))}</small></div><span className="badge pink">{t.legend}</span></div><div className="report-line"><span className="date-circle">02</span><div><b>{t.fertile}</b><small>{statusExplanation}</small></div><span className="badge redbg">{statusLabel}</span></div><div className="report-line"><span className="date-circle">03</span><div><b>{t.uncertain}</b><small>{t.uncertainText}</small></div><span className="badge yellowbg">!</span></div><div className="info-box"><b>{t.insight}</b><p>{t.insightText}</p></div><p className="disclaimer">{t.disclaimer}</p></section><FertilityNotificationCenter language={lang} observations={observationHistory} /></>}
