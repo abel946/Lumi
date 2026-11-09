@@ -66,7 +66,7 @@ export async function GET(request) {
 
   const { data: subscriptions, error: subscriptionError } = await supabase
     .from("push_subscriptions")
-    .select("id,user_id,endpoint,p256dh,auth,timezone,preferred_hour,language")
+    .select("id,user_id,endpoint,p256dh,auth,timezone,language")
     .eq("enabled", true);
 
   if (subscriptionError) {
@@ -76,7 +76,6 @@ export async function GET(request) {
   const dueByUserDay = new Map();
   for (const subscription of subscriptions ?? []) {
     const clock = localClock(subscription.timezone || "Africa/Addis_Ababa");
-    if (clock.hour < Number(subscription.preferred_hour ?? 8)) continue;
     const key = subscription.user_id + ":" + clock.date;
     if (!dueByUserDay.has(key)) dueByUserDay.set(key, { userId: subscription.user_id, date: clock.date, subscriptions: [] });
     dueByUserDay.get(key).subscriptions.push(subscription);

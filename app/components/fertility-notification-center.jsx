@@ -17,8 +17,7 @@ const copy = {
     intro: "Lumi can send a simple fertility update even when you close the app.",
     enable: "Turn on daily notifications",
     disable: "Turn off notifications",
-    time: "Choose your notification time",
-    save: "Save time",
+    time: "Daily delivery is set for 8:00 AM East Africa Time. In other countries, the local clock time may be different.",
     permission: "Allow notifications when your phone asks.",
     unsupported: "This browser does not support push notifications. Install Lumi from Chrome on Android and try again.",
     notReady: "Push delivery is being prepared. Please try again later.",
@@ -41,8 +40,7 @@ const copy = {
     intro: "መተግበሪያውን ቢዘጉም ሉሚ በየቀኑ ቀላል የመራቢያ መረጃ ሊልክልዎ ይችላል።",
     enable: "የዕለት ማሳወቂያዎችን አብራ",
     disable: "ማሳወቂያዎችን አጥፋ",
-    time: "ማሳወቂያው የሚደርስበትን ሰዓት ይምረጡ",
-    save: "ሰዓቱን አስቀምጥ",
+    time: "ማሳወቂያው በምስራቅ አፍሪካ ሰዓት ጠዋት 8:00 ይደርሳል። በሌሎች አገሮች የአካባቢ ሰዓቱ ሊለያይ ይችላል።",
     permission: "ስልክዎ ሲጠይቅ ማሳወቂያዎችን ይፍቀዱ።",
     unsupported: "ይህ አሳሽ ማሳወቂያዎችን አይደግፍም። Lumiን ከAndroid Chrome ይጫኑና እንደገና ይሞክሩ።",
     notReady: "የማሳወቂያ አገልግሎቱ ገና እየተዘጋጀ ነው። እባክዎ ቆይተው ይሞክሩ።",
@@ -74,7 +72,6 @@ export default function FertilityNotificationCenter({ language = "en", observati
   const t = copy[lang];
   const [userId, setUserId] = useState("");
   const [enabled, setEnabled] = useState(false);
-  const [hour, setHour] = useState("8");
   const [reports, setReports] = useState([]);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
@@ -97,7 +94,6 @@ export default function FertilityNotificationCenter({ language = "en", observati
         if (!active) return;
         if (subscriptions.data?.[0]) {
           setEnabled(true);
-          setHour(String(subscriptions.data[0].preferred_hour ?? 8));
         }
         if (history.data) setReports(history.data);
       } catch {
@@ -120,7 +116,7 @@ export default function FertilityNotificationCenter({ language = "en", observati
       auth: json.keys.auth,
       user_agent: navigator.userAgent,
       timezone,
-      preferred_hour: Number(hour),
+      preferred_hour: 8,
       language: lang,
       enabled: true,
       updated_at: new Date().toISOString(),
@@ -184,7 +180,7 @@ export default function FertilityNotificationCenter({ language = "en", observati
       const supabase = getSupabaseBrowserClient();
       const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "Africa/Addis_Ababa";
       const { error } = await supabase.from("push_subscriptions").update({
-        preferred_hour: Number(hour),
+        preferred_hour: 8,
         timezone,
         language: lang,
         updated_at: new Date().toISOString(),
@@ -210,16 +206,10 @@ export default function FertilityNotificationCenter({ language = "en", observati
         </div>
         <small>{learningDays} / 30 {t.days}</small>
       </div>
-      <label className="field-label" htmlFor="lumi-notification-time">{t.time}</label>
-      <select id="lumi-notification-time" className="input" value={hour} onChange={(event) => setHour(event.target.value)}>
-        {[6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21].map((value) => (
-          <option key={value} value={value}>{String(value).padStart(2, "0")}:00</option>
-        ))}
-      </select>
+      <div className="info-box">{t.time}</div>
       <button className="primary-button" disabled={busy || !support || !userId} onClick={enabled ? disable : enable}>
         {busy ? "…" : enabled ? t.disable : t.enable}
       </button>
-      {enabled && <button className="outline-button" disabled={busy} onClick={saveTime}>{t.save}</button>}
       {!support && <p className="shop-error">{t.unsupported}</p>}
       {message && <p className="muted" role="status">{message}</p>}
       <div className="shop-divider" />
