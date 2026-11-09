@@ -244,3 +244,105 @@ body{background:linear-gradient(180deg,#fff2f8 0,#fffafd 260px,#fff 720px)}
 .tabs button:nth-child(4) .tab-label{color:#b33d78}
 @keyframes lumiShopFloat{0%,100%{transform:translateY(0) scale(1)}45%{transform:translateY(-3px) scale(1.08)}65%{transform:translateY(0) scale(1)}}
 @media(prefers-reduced-motion:reduce){.tabs button:nth-child(4) .tab-icon{animation:none}}
+
+
+/* FINAL FIX: stable five-item Android bottom navigation. This block intentionally
+   comes last so earlier responsive/navigation styles cannot override it. */
+@media (max-width: 599px) {
+  html, body { min-height: 100%; }
+  .shell {
+    width: 100%;
+    max-width: 520px;
+    margin-inline: auto;
+    padding-bottom: calc(104px + env(safe-area-inset-bottom, 0px)) !important;
+    overflow-x: hidden;
+  }
+  .tabs {
+    position: fixed !important;
+    inset: auto 0 0 0 !important;
+    transform: none !important;
+    width: 100% !important;
+    max-width: 520px;
+    height: auto !important;
+    min-height: 68px !important;
+    margin: 0 auto !important;
+    padding: 7px 5px calc(7px + env(safe-area-inset-bottom, 0px)) !important;
+    display: grid !important;
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+    align-items: stretch !important;
+    justify-items: stretch !important;
+    gap: 2px !important;
+    box-sizing: border-box !important;
+    border: 1px solid #f1d5e2 !important;
+    border-bottom: 0 !important;
+    border-radius: 20px 20px 0 0 !important;
+    background: rgba(255, 250, 252, .98) !important;
+    box-shadow: 0 -7px 24px rgba(143, 44, 91, .13) !important;
+    z-index: 9999 !important;
+  }
+  .tabs > button {
+    display: flex !important;
+    position: relative !important;
+    float: none !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    height: 52px !important;
+    min-height: 52px !important;
+    max-height: 52px !important;
+    margin: 0 !important;
+    padding: 4px 1px !important;
+    flex: initial !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 4px !important;
+    overflow: hidden !important;
+    white-space: nowrap !important;
+    border-radius: 12px !important;
+    box-sizing: border-box !important;
+    line-height: 1.1 !important;
+    font-size: 9px !important;
+  }
+  .tabs > button .tab-icon {
+    display: block !important;
+    flex: none !important;
+    margin: 0 !important;
+    font-size: 18px !important;
+    line-height: 1 !important;
+  }
+  .tabs > button .tab-label {
+    display: block !important;
+    flex: none !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+    text-align: center !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    font-size: 8px !important;
+    line-height: 1.1 !important;
+  }
+}
+@media (min-width: 600px) {
+  .shell { padding-bottom: 112px !important; }
+  .tabs {
+    position: fixed !important;
+    left: 50% !important;
+    right: auto !important;
+    bottom: 16px !important;
+    top: auto !important;
+    transform: translateX(-50%) !important;
+    width: min(520px, calc(100% - 24px)) !important;
+    display: grid !important;
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+    gap: 4px !important;
+    z-index: 9999 !important;
+  }
+  .tabs > button { min-width: 0 !important; width: 100% !important; }
+}
+@media (max-width: 350px) {
+  .tabs { padding-left: 3px !important; padding-right: 3px !important; }
+  .tabs > button .tab-label { font-size: 7px !important; }
+}
