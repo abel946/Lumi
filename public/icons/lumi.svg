@@ -1,1 +1,36 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><defs><linearGradient id="b" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ffb7d3"/><stop offset=".55" stop-color="#ed6da5"/><stop offset="1" stop-color="#c83d7b"/></linearGradient></defs><rect width="512" height="512" rx="112" fill="url(#b)"/><circle cx="256" cy="226" r="183" fill="#fff" opacity=".18"/><g fill="#b71948" stroke="#fff4f8" stroke-width="9"><ellipse cx="256" cy="155" rx="48" ry="83"/><ellipse cx="256" cy="297" rx="48" ry="83"/><ellipse cx="185" cy="226" rx="83" ry="48"/><ellipse cx="327" cy="226" rx="83" ry="48"/><ellipse cx="206" cy="176" rx="45" ry="75" transform="rotate(-45 206 176)"/><ellipse cx="306" cy="276" rx="45" ry="75" transform="rotate(-45 306 276)"/><ellipse cx="306" cy="176" rx="45" ry="75" transform="rotate(45 306 176)"/><ellipse cx="206" cy="276" rx="45" ry="75" transform="rotate(45 206 276)"/></g><circle cx="256" cy="226" r="36" fill="#fff1f6" stroke="#b71948" stroke-width="8"/><circle cx="256" cy="226" r="12" fill="#b71948"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<defs>
+ <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ffb9d7"/><stop offset=".55" stop-color="#ef65a3"/><stop offset="1" stop-color="#c52e78"/></linearGradient>
+ <linearGradient id="skin" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f4a06e"/><stop offset="1" stop-color="#a94b35"/></linearGradient>
+ <linearGradient id="dress" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ffb8d7"/><stop offset="1" stop-color="#df2385"/></linearGradient>
+ <filter id="glow"><feGaussianBlur stdDeviation="10"/></filter>
+</defs>
+<rect width="512" height="512" rx="112" fill="url(#bg)"/>
+<circle cx="248" cy="230" r="208" fill="#fff" opacity=".17"/>
+<circle cx="248" cy="230" r="190" fill="none" stroke="#fff" stroke-width="8" opacity=".7"/>
+<!-- braided hair silhouette -->
+<path d="M95 235C68 115 153 48 260 60c91 10 141 85 120 178l-29 75-214 8z" fill="#35152f"/>
+<g fill="none" stroke="#7d315c" stroke-width="15" stroke-linecap="round"><path d="M110 214Q75 110 174 76M128 266Q75 153 195 67M151 292Q99 174 225 64M179 305Q133 177 255 68M207 308Q173 177 286 83M236 302Q215 174 318 108"/></g>
+<!-- face and neck -->
+<path d="M206 108c67-29 134 11 136 86 1 49-23 92-58 113l-2 54-93 4 9-75c-31-24-47-65-39-111 5-31 20-56 47-71z" fill="url(#skin)" stroke="#8d3e38" stroke-width="5"/>
+<path d="M208 159q35-27 69-9M294 149q22-9 39 4" fill="none" stroke="#4a2029" stroke-width="10" stroke-linecap="round"/>
+<path d="M235 190q20-13 38 0M302 185q15-8 27 2" fill="none" stroke="#301a26" stroke-width="7" stroke-linecap="round"/>
+<circle cx="254" cy="192" r="5" fill="#fff"/><circle cx="316" cy="190" r="5" fill="#fff"/>
+<path d="M278 203q-8 24 8 28" fill="none" stroke="#8f4638" stroke-width="5" stroke-linecap="round"/>
+<path d="M267 247q28 18 54-4" fill="none" stroke="#9d244e" stroke-width="9" stroke-linecap="round"/>
+<circle cx="207" cy="243" r="19" fill="#f2c85b" stroke="#fff1c7" stroke-width="5"/>
+<!-- traditional pink dress -->
+<path d="M160 345q65-41 124-5 76 11 111 116H87q21-86 73-111z" fill="url(#dress)" stroke="#fff0f7" stroke-width="8"/>
+<path d="M143 384l190 0M124 414l250 0" stroke="#fff" stroke-width="5" opacity=".75"/>
+<path d="M155 370l20 14-20 14-20-14zM205 370l20 14-20 14-20-14zM255 370l20 14-20 14-20-14zM305 370l20 14-20 14-20-14z" fill="none" stroke="#fff4fa" stroke-width="5"/>
+<!-- calendar -->
+<rect x="345" y="143" width="119" height="137" rx="17" fill="#fff8fc" stroke="#fff" stroke-width="7"/>
+<path d="M345 175h119" stroke="#e82d8a" stroke-width="25"/>
+<path d="M371 134v25M437 134v25" stroke="#fff" stroke-width="10" stroke-linecap="round"/>
+<g fill="#f6a9cd"><rect x="360" y="194" width="20" height="18" rx="5"/><rect x="389" y="194" width="20" height="18" rx="5"/><rect x="418" y="194" width="20" height="18" rx="5"/><rect x="447" y="194" width="10" height="18" rx="4"/><rect x="360" y="222" width="20" height="18" rx="5"/><rect x="389" y="222" width="20" height="18" rx="5"/><rect x="418" y="222" width="20" height="18" rx="5"/></g>
+<path d="M407 211c-20 26-19 42 0 49 20-8 20-24 0-49z" fill="#e91e85" stroke="#fff" stroke-width="4"/>
+<!-- lotus mark -->
+<g fill="#f72c99" stroke="#fff" stroke-width="5"><path d="M403 340q-36-53 0-83 37 31 0 83z"/><path d="M402 341q-60-28-56-65 43-3 56 65z"/><path d="M403 341q60-28 56-65-43-3-56 65z"/></g>
+<circle cx="403" cy="343" r="12" fill="#fff"/>
+<path d="M72 456q178 35 368-1" fill="none" stroke="#fff" stroke-width="7" opacity=".65" stroke-linecap="round"/>
+</svg>
