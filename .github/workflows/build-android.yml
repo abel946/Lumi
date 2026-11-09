@@ -11,7 +11,7 @@ on:
       - 'www/**'
       - 'app/**'
       - 'lib/**'
-      - 'public/icons/lumi.svg'
+      - 'public/icons/lumi-android.svg'
       - 'package.json'
       - 'package-lock.json'
   workflow_dispatch:
@@ -58,11 +58,11 @@ jobs:
           for (const [density, size] of densities) {
             const dir = `android/app/src/main/res/mipmap-${density}`;
             await mkdir(dir, { recursive: true });
-            await sharp('public/icons/lumi.svg')
+            await sharp('public/icons/lumi-android.svg')
               .resize(size, size)
               .png()
               .toFile(`${dir}/ic_launcher.png`);
-            await sharp('public/icons/lumi.svg')
+            await sharp('public/icons/lumi-android.svg')
               .resize(432, 432)
               .png()
               .toFile(`${dir}/ic_launcher_foreground.png`);
