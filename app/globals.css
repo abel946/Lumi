@@ -144,3 +144,22 @@
 .observation-fields:disabled .input,.observation-fields:disabled .chip,.observation-fields:disabled .choice{cursor:not-allowed}
 .primary-button:disabled{opacity:.55;cursor:not-allowed;filter:saturate(.7)}
 .observation-edit{width:100%;margin-top:10px}
+
+
+/* Gentle animated emphasis for the Shop destination in the fixed bottom navigation. */
+.tabs button:nth-child(4) .tab-icon{
+  transform-origin:50% 65%;
+  animation:lumiShopFloat 2.6s ease-in-out infinite;
+  filter:drop-shadow(0 2px 5px rgba(210,65,132,.22));
+}
+.tabs button:nth-child(4) .tab-label{
+  color:#b33d78;
+}
+@keyframes lumiShopFloat{
+  0%,100%{transform:translateY(0) scale(1)}
+  45%{transform:translateY(-3px) scale(1.08)}
+  65%{transform:translateY(0) scale(1)}
+}
+@media(prefers-reduced-motion:reduce){
+  .tabs button:nth-child(4) .tab-icon{animation:none}
+}
