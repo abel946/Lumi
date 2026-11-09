@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - fertility-engine-dev
+      - fix-mobile-layout
     paths:
       - 'capacitor.config.json'
       - '.github/workflows/build-android.yml'
